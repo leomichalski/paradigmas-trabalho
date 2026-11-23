@@ -45,7 +45,7 @@ ProspectFlow is an Elm-based MVP for a text-based LLM Workflow Engine. The appli
 1. **Enter API Key:** Provide your OpenAI API Key (starting with `sk-...`).
 2. **Define Workflow:** Enter a linear pipeline using the limited Mermaid syntax. Example:
    ```mermaid
-   Start[FETCH: https://jsonplaceholder.typicode.com/posts/1] --> Summarize[PROMPT: Summarize the following JSON: {{input}}] --> Send[POST: https://httpbin.org/post]
+   Start["FETCH: https://jsonplaceholder.typicode.com/posts/1"] --> Summarize["PROMPT: Summarize the following JSON: {{input}}"] --> Send["POST: https://httpbin.org/post"]
    ```
 3. **Trigger Input:** Provide any initial data to trigger the workflow. This will replace the `{{input}}` token in the first node.
 4. **Save & Run:** Click "Save Agent" to parse the workflow, and then "Run Agent" to kick off the execution. Watch the Execution Status logs as it progresses step by step!

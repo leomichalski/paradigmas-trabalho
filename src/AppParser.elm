@@ -15,14 +15,21 @@ idParser : Parser String
 idParser =
     getChompedString <| chompWhile (\c -> Char.isAlphaNum c || c == '_')
 
-nodeParser : Parser PipelineNode
-nodeParser =
-    succeed PipelineNode
-        |= idParser
-        |. symbol "["
+nodeContentParser : Parser ( ActionType, String )
+nodeContentParser =
+    succeed (\a p -> ( a, p ))
+        |. symbol "\""
         |= actionTypeParser
         |. spaces
-        |= (getChompedString (chompUntil "]") |> map String.trim)
+        |= (getChompedString (chompUntil "\"") |> map String.trim)
+        |. symbol "\""
+
+nodeParser : Parser PipelineNode
+nodeParser =
+    succeed (\id (aType, payload) -> PipelineNode id aType payload)
+        |= idParser
+        |. symbol "["
+        |= nodeContentParser
         |. symbol "]"
 
 connectorParser : Parser ()
@@ -58,4 +65,4 @@ parsePipeline input =
                 Ok nodes
 
         Err _ ->
-            Err "Syntax error. Expected NodeID[PREFIX: Payload]."
+            Err "Syntax error. Expected NodeID[PREFIX: Payload] or NodeID[\"PREFIX: Payload\"]."

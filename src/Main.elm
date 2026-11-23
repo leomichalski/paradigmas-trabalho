@@ -22,6 +22,7 @@ init _ =
       , apiKey = ""
       , parsedPipeline = Err "No workflow defined."
       , executionState = Idle
+      , mermaidError = Nothing
       }
     , Cmd.none
     )
@@ -30,7 +31,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateWorkflowText txt ->
-            ( { model | workflowText = txt }, Cmd.none )
+            ( { model | workflowText = txt, mermaidError = Nothing }, Cmd.none )
 
         UpdateTriggerInput txt ->
             ( { model | triggerInput = txt }, Cmd.none )
@@ -50,6 +51,12 @@ update msg model =
 
         GotNodeResult res ->
             Engine.handleNodeResult model res
+
+        GotMermaidError err ->
+            ( { model | mermaidError = Just err }, Cmd.none )
+
+        GotMermaidSuccess ->
+            ( { model | mermaidError = Nothing }, Cmd.none )
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =

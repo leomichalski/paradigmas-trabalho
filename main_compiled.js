@@ -5165,6 +5165,7 @@ var $author$project$Main$init = function (_v0) {
 	return _Utils_Tuple2(
 		{
 			apiKey: '',
+			mermaidError: $elm$core$Maybe$Nothing,
 			triggerInput: '',
 			workflowText: '',
 			executionState: $author$project$Types$Idle,
@@ -5194,6 +5195,7 @@ var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
 var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$html$Html$h3 = _VirtualDom_node('h3');
+var $elm$core$String$trim = _String_trim;
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -5205,6 +5207,9 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 	});
 var $elm$html$Html$Attributes$type_ = $elm$html$Html$Attributes$stringProperty('type');
 var $elm$html$Html$Attributes$value = $elm$html$Html$Attributes$stringProperty('value');
+var $elm$core$String$isEmpty = function (string) {
+	return string === '';
+};
 var $elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
 };
@@ -5296,8 +5301,103 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 };
 var $elm$html$Html$textarea = _VirtualDom_node('textarea');
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
+var $elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var $elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var $elm$html$Html$pre = _VirtualDom_node('pre');
+var $elm$virtual_dom$VirtualDom$node = function (tag) {
+	return _VirtualDom_node(
+		_VirtualDom_noScript(tag));
+};
+var $elm$html$Html$node = $elm$virtual_dom$VirtualDom$node;
+var $elm$virtual_dom$VirtualDom$keyedNode = function (tag) {
+	return _VirtualDom_keyedNode(
+		_VirtualDom_noScript(tag));
+};
+var $elm$html$Html$Keyed$node = $elm$virtual_dom$VirtualDom$keyedNode;
+var $author$project$Types$GotMermaidError = function (a) {
+	return {$: 'GotMermaidError', a: a};
+};
+var $author$project$Types$GotMermaidSuccess = {$: 'GotMermaidSuccess'};
+var $author$project$View$viewMermaid = function (workflowText) {
+	var renderDecoder = $elm$json$Json$Decode$succeed($author$project$Types$GotMermaidSuccess);
+	var errorDecoder = A2(
+		$elm$json$Json$Decode$map,
+		$author$project$Types$GotMermaidError,
+		A2(
+			$elm$json$Json$Decode$at,
+			_List_fromArray(
+				['detail', 'error', 'message']),
+			$elm$json$Json$Decode$string));
+	var mermaidText = 'graph TD\u000A' + workflowText;
+	return A3(
+		$elm$html$Html$Keyed$node,
+		'div',
+		_List_fromArray(
+			[
+				A2($elm$html$Html$Attributes$style, 'margin-top', '10px')
+			]),
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				mermaidText,
+				A3(
+					$elm$html$Html$node,
+					'mermaid-element',
+					_List_fromArray(
+						[
+							A2($elm$html$Html$Events$on, 'error', errorDecoder),
+							A2($elm$html$Html$Events$on, 'render', renderDecoder)
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$pre,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A3(
+									$elm$html$Html$node,
+									'code',
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text(mermaidText)
+										]))
+								]))
+						])))
+			]));
+};
 var $author$project$Types$UpdateApiKey = function (a) {
 	return {$: 'UpdateApiKey', a: a};
+};
+var $author$project$View$viewMermaidError = function (model) {
+	var _v0 = model.mermaidError;
+	if (_v0.$ === 'Just') {
+		var err = _v0.a;
+		return A2(
+			$elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2($elm$html$Html$Attributes$style, 'color', 'red'),
+					A2($elm$html$Html$Attributes$style, 'border', '1px solid red'),
+					A2($elm$html$Html$Attributes$style, 'padding', '10px'),
+					A2($elm$html$Html$Attributes$style, 'margin-top', '10px')
+				]),
+			_List_fromArray(
+				[
+					$elm$html$Html$text('Mermaid Error: ' + err)
+				]));
+	} else {
+		return $elm$html$Html$text('');
+	}
 };
 var $author$project$Types$UpdateTriggerInput = function (a) {
 	return {$: 'UpdateTriggerInput', a: a};
@@ -5356,13 +5456,16 @@ var $author$project$View$viewInputs = function (model) {
 						$elm$html$Html$textarea,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$placeholder('Node1[FETCH: https://...] --> Node2[PROMPT: Summarize {{input}}]'),
+								$elm$html$Html$Attributes$placeholder('Node1[\u0022FETCH: https://...\u0022] --> Node2[\u0022PROMPT: Summarize {{input}}\u0022]'),
 								$elm$html$Html$Attributes$value(model.workflowText),
 								$elm$html$Html$Events$onInput($author$project$Types$UpdateWorkflowText),
 								A2($elm$html$Html$Attributes$style, 'width', '100%'),
 								A2($elm$html$Html$Attributes$style, 'height', '100px')
 							]),
-						_List_Nil)
+						_List_Nil),
+						$author$project$View$viewMermaidError(model),
+						$elm$core$String$isEmpty(
+						$elm$core$String$trim(model.workflowText)) ? $elm$html$Html$text('') : $author$project$View$viewMermaid(model.workflowText)
 					])),
 				A2(
 				$elm$html$Html$div,
@@ -5390,6 +5493,30 @@ var $author$project$View$viewInputs = function (model) {
 					]))
 			]));
 };
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$Basics$not = _Basics_not;
+var $elm$html$Html$span = _VirtualDom_node('span');
+var $author$project$Types$Prompt = {$: 'Prompt'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $author$project$View$isError = function (res) {
 	if (res.$ === 'Err') {
@@ -5398,16 +5525,6 @@ var $author$project$View$isError = function (res) {
 		return false;
 	}
 };
-var $elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var $elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
 var $elm$html$Html$Events$onClick = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -5426,13 +5543,30 @@ var $elm$html$Html$Attributes$boolProperty = F2(
 var $elm$html$Html$Attributes$disabled = $elm$html$Html$Attributes$boolProperty('disabled');
 var $author$project$Types$SaveAgent = {$: 'SaveAgent'};
 var $author$project$View$viewButtons = function (model) {
+	var runDisabled = function () {
+		var _v0 = model.parsedPipeline;
+		if (_v0.$ === 'Err') {
+			return true;
+		} else {
+			var nodes = _v0.a;
+			var hasPrompt = A2(
+				$elm$core$List$any,
+				function (n) {
+					return _Utils_eq(n.actionType, $author$project$Types$Prompt);
+				},
+				nodes);
+			return hasPrompt && $elm$core$String$isEmpty(
+				$elm$core$String$trim(model.apiKey));
+		}
+	}();
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
 				A2($elm$html$Html$Attributes$style, 'margin-top', '20px'),
 				A2($elm$html$Html$Attributes$style, 'display', 'flex'),
-				A2($elm$html$Html$Attributes$style, 'gap', '10px')
+				A2($elm$html$Html$Attributes$style, 'gap', '10px'),
+				A2($elm$html$Html$Attributes$style, 'align-items', 'center')
 			]),
 		_List_fromArray(
 			[
@@ -5451,13 +5585,23 @@ var $author$project$View$viewButtons = function (model) {
 				_List_fromArray(
 					[
 						$elm$html$Html$Events$onClick($author$project$Types$RunAgent),
-						$elm$html$Html$Attributes$disabled(
-						$author$project$View$isError(model.parsedPipeline))
+						$elm$html$Html$Attributes$disabled(runDisabled)
 					]),
 				_List_fromArray(
 					[
 						$elm$html$Html$text('Run Agent')
-					]))
+					])),
+				(runDisabled && (!$author$project$View$isError(model.parsedPipeline))) ? A2(
+				$elm$html$Html$span,
+				_List_fromArray(
+					[
+						A2($elm$html$Html$Attributes$style, 'color', 'red'),
+						A2($elm$html$Html$Attributes$style, 'font-size', '0.9em')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('API Key required for PROMPT nodes.')
+					])) : $elm$html$Html$text('')
 			]));
 };
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
@@ -5476,7 +5620,6 @@ var $elm$core$List$map = F2(
 			xs);
 	});
 var $elm$html$Html$p = _VirtualDom_node('p');
-var $elm$html$Html$pre = _VirtualDom_node('pre');
 var $author$project$View$viewLogEntry = function (entry) {
 	return A2(
 		$elm$html$Html$div,
@@ -5652,7 +5795,6 @@ var $elm$parser$Parser$run = F2(
 				A2($elm$core$List$map, $elm$parser$Parser$problemToDeadEnd, problems));
 		}
 	});
-var $elm$core$String$trim = _String_trim;
 var $elm$core$List$isEmpty = function (xs) {
 	if (!xs.b) {
 		return true;
@@ -5962,10 +6104,6 @@ var $elm$parser$Parser$Advanced$Token = F2(
 	function (a, b) {
 		return {$: 'Token', a: a, b: b};
 	});
-var $elm$core$Basics$not = _Basics_not;
-var $elm$core$String$isEmpty = function (string) {
-	return string === '';
-};
 var $elm$parser$Parser$Advanced$isSubString = _Parser_isSubString;
 var $elm$parser$Parser$Advanced$token = function (_v0) {
 	var str = _v0.a;
@@ -6036,6 +6174,10 @@ var $author$project$AppParser$idParser = $elm$parser$Parser$getChompedString(
 				c,
 				_Utils_chr('_'));
 		}));
+var $author$project$Types$PipelineNode = F3(
+	function (id, actionType, payload) {
+		return {id: id, payload: payload, actionType: actionType};
+	});
 var $elm$parser$Parser$Expecting = function (a) {
 	return {$: 'Expecting', a: a};
 };
@@ -6076,13 +6218,8 @@ var $elm$parser$Parser$chompUntil = function (str) {
 	return $elm$parser$Parser$Advanced$chompUntil(
 		$elm$parser$Parser$toToken(str));
 };
-var $author$project$Types$PipelineNode = F3(
-	function (id, actionType, payload) {
-		return {id: id, payload: payload, actionType: actionType};
-	});
 var $author$project$Types$Post = {$: 'Post'};
 var $author$project$Types$Fetch = {$: 'Fetch'};
-var $author$project$Types$Prompt = {$: 'Prompt'};
 var $author$project$AppParser$actionTypeParser = $elm$parser$Parser$oneOf(
 	_List_fromArray(
 		[
@@ -6105,17 +6242,18 @@ var $author$project$AppParser$actionTypeParser = $elm$parser$Parser$oneOf(
 			},
 			$elm$parser$Parser$symbol('POST:'))
 		]));
-var $author$project$AppParser$nodeParser = A2(
+var $author$project$AppParser$nodeContentParser = A2(
 	$elm$parser$Parser$keeper,
 	A2(
 		$elm$parser$Parser$keeper,
 		A2(
-			$elm$parser$Parser$keeper,
-			$elm$parser$Parser$succeed($author$project$Types$PipelineNode),
-			A2(
-				$elm$parser$Parser$ignorer,
-				$author$project$AppParser$idParser,
-				$elm$parser$Parser$symbol('['))),
+			$elm$parser$Parser$ignorer,
+			$elm$parser$Parser$succeed(
+				F2(
+					function (a, p) {
+						return _Utils_Tuple2(a, p);
+					})),
+			$elm$parser$Parser$symbol('\u0022')),
 		A2($elm$parser$Parser$ignorer, $author$project$AppParser$actionTypeParser, $elm$parser$Parser$spaces)),
 	A2(
 		$elm$parser$Parser$ignorer,
@@ -6123,7 +6261,26 @@ var $author$project$AppParser$nodeParser = A2(
 			$elm$parser$Parser$map,
 			$elm$core$String$trim,
 			$elm$parser$Parser$getChompedString(
-				$elm$parser$Parser$chompUntil(']'))),
+				$elm$parser$Parser$chompUntil('\u0022'))),
+		$elm$parser$Parser$symbol('\u0022')));
+var $author$project$AppParser$nodeParser = A2(
+	$elm$parser$Parser$keeper,
+	A2(
+		$elm$parser$Parser$keeper,
+		$elm$parser$Parser$succeed(
+			F2(
+				function (id, _v0) {
+					var aType = _v0.a;
+					var payload = _v0.b;
+					return A3($author$project$Types$PipelineNode, id, aType, payload);
+				})),
+		A2(
+			$elm$parser$Parser$ignorer,
+			$author$project$AppParser$idParser,
+			$elm$parser$Parser$symbol('['))),
+	A2(
+		$elm$parser$Parser$ignorer,
+		$author$project$AppParser$nodeContentParser,
 		$elm$parser$Parser$symbol(']')));
 var $author$project$AppParser$connectorParser = A2(
 	$elm$parser$Parser$ignorer,
@@ -6180,7 +6337,7 @@ var $author$project$AppParser$parsePipeline = function (input) {
 		var nodes = _v0.a;
 		return $elm$core$List$isEmpty(nodes) ? $elm$core$Result$Err('Pipeline is empty or invalid format.') : $elm$core$Result$Ok(nodes);
 	} else {
-		return $elm$core$Result$Err('Syntax error. Expected NodeID[PREFIX: Payload].');
+		return $elm$core$Result$Err('Syntax error. Expected NodeID[PREFIX: Payload] or NodeID[\u0022PREFIX: Payload\u0022].');
 	}
 };
 var $elm$core$List$head = function (list) {
@@ -7300,8 +7457,12 @@ var $author$project$Engine$handleNodeResult = F2(
 						case 'NetworkError':
 							return 'Network Error';
 						case 'BadStatus':
-							var status = httpErr.a;
-							return 'Bad Status: ' + $elm$core$String$fromInt(status);
+							if (httpErr.a === 401) {
+								return 'Unauthorized: Please check your OpenAI API Key.';
+							} else {
+								var status = httpErr.a;
+								return 'Bad Status: ' + $elm$core$String$fromInt(status);
+							}
 						default:
 							var bodyErr = httpErr.a;
 							return 'Bad Body: ' + bodyErr;
@@ -7328,7 +7489,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{workflowText: txt}),
+						{mermaidError: $elm$core$Maybe$Nothing, workflowText: txt}),
 					$elm$core$Platform$Cmd$none);
 			case 'UpdateTriggerInput':
 				var txt = msg.a;
@@ -7353,9 +7514,24 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 			case 'RunAgent':
 				return $author$project$Engine$startExecution(model);
-			default:
+			case 'GotNodeResult':
 				var res = msg.a;
 				return A2($author$project$Engine$handleNodeResult, model, res);
+			case 'GotMermaidError':
+				var err = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							mermaidError: $elm$core$Maybe$Just(err)
+						}),
+					$elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{mermaidError: $elm$core$Maybe$Nothing}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
 var $elm$core$Basics$never = function (_v0) {

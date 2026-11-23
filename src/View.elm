@@ -2,7 +2,9 @@ module View exposing (view)
 
 import Html exposing (Html, div, text, textarea, input, button, h1, h2, h3, pre, p, span)
 import Html.Attributes exposing (placeholder, value, style, class, type_)
-import Html.Events exposing (onInput, onClick)
+import Html.Events exposing (onInput, onClick, on)
+import Html.Keyed
+import Json.Decode as Decode
 import Types exposing (..)
 
 isError : Result e a -> Bool
@@ -18,6 +20,39 @@ view model =
         , viewInputs model
         , viewButtons model
         , viewExecutionLog model
+        ]
+
+viewMermaidError : Model -> Html Msg
+viewMermaidError model =
+    case model.mermaidError of
+        Just err ->
+            div [ style "color" "red", style "border" "1px solid red", style "padding" "10px", style "margin-top" "10px" ]
+                [ text ("Mermaid Error: " ++ err) ]
+        Nothing ->
+            text ""
+
+viewMermaid : String -> Html Msg
+viewMermaid workflowText =
+    let
+        mermaidText =
+            "graph TD\n" ++ workflowText
+
+        errorDecoder =
+            Decode.at [ "detail", "error", "message" ] Decode.string
+                |> Decode.map GotMermaidError
+
+        renderDecoder =
+            Decode.succeed GotMermaidSuccess
+    in
+    Html.Keyed.node "div"
+        [ style "margin-top" "10px" ]
+        [ ( mermaidText
+          , Html.node "mermaid-element"
+                [ on "error" errorDecoder
+                , on "render" renderDecoder
+                ]
+                [ pre [] [ Html.node "code" [] [ text mermaidText ] ] ]
+          )
         ]
 
 viewInputs : Model -> Html Msg
@@ -36,12 +71,17 @@ viewInputs model =
         , div []
             [ h3 [] [ text "Mermaid Workflow Definition" ]
             , textarea
-                [ placeholder "Node1[FETCH: https://...] --> Node2[PROMPT: Summarize {{input}}]"
+                [ placeholder "Node1[\"FETCH: https://...\"] --> Node2[\"PROMPT: Summarize {{input}}\"]"
                 , value model.workflowText
                 , onInput UpdateWorkflowText
                 , style "width" "100%"
                 , style "height" "100px"
                 ] []
+            , viewMermaidError model
+            , if String.isEmpty (String.trim model.workflowText) then
+                text ""
+              else
+                viewMermaid model.workflowText
             ]
         , div []
             [ h3 [] [ text "Trigger Input" ]

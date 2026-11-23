@@ -31,6 +31,7 @@ type alias Model =
     , apiKey : String
     , parsedPipeline : Result String (List PipelineNode)
     , executionState : ExecutionState
+    , mermaidError : Maybe String
     }
 
 type Msg
@@ -40,3 +41,5 @@ type Msg
     | SaveAgent
     | RunAgent
     | GotNodeResult (Result Http.Error String)
+    | GotMermaidError String
+    | GotMermaidSuccess
