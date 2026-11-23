@@ -2,6 +2,8 @@
 
 ProspectFlow is an Elm-based MVP for a text-based LLM Workflow Engine. The application allows users to define a sequential pipeline of data enrichment and LLM prompts using a limited Mermaid.js syntax. It executes the pipeline entirely in the browser using The Elm Architecture (TEA) with no backend, relying on `elm/http` for API chaining.
 
+![App Demo](assets/demo.gif)
+
 ## Features
 
 - **Browser-Native Execution:** Runs entirely in the client with no backend dependencies, using Elm's robust state management.
