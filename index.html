@@ -2,12 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Elm + Mermaid</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Elm + Mermaid</title>
   <link rel="stylesheet" href="style.css">
+
+  <script>
+    try {
+      if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (e) {}
+  </script>
 </head>
 <body>
+  <button id="theme-toggle" class="theme-toggle" type="button"></button>
+
   <div id="app"></div>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var btn = document.getElementById('theme-toggle');
+
+      function refreshLabel() {
+        btn.textContent = root.getAttribute('data-theme') === 'dark' ? 'Modo claro' : 'Modo escuro';
+      }
+
+      btn.addEventListener('click', function () {
+        var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+        try { localStorage.setItem('theme', next); } catch (e) {}
+        refreshLabel();
+      });
+
+      refreshLabel();
+    })();
+  </script>
 
   <!-- 1. Load your compiled Elm code -->
   <script src="elm.js"></script>

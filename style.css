@@ -11,9 +11,11 @@
   --accent-text: #ffffff;
   --danger: #a4262c;
   --info: #2f6f9f;
+
   --tag-fetch: #2f6f9f;
   --tag-prompt: #7a4fa3;
   --tag-post: #9a5b13;
+
   --radius: 6px;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -225,7 +227,6 @@ mermaid-element {
 .status--failed {
   color: var(--danger);
 }
-
 
 .status--running::before {
   content: "";
