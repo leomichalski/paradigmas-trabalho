@@ -6,6 +6,7 @@ import Html.Events exposing (on, onClick, onInput)
 import Html.Keyed
 import Json.Decode as Decode
 import Types exposing (..)
+import Translations exposing (Language(..), TextId(..), translate)
 
 
 isError : Result e a -> Bool
@@ -21,7 +22,12 @@ isError res =
 view : Model -> Html Msg
 view model =
     main_ [ class "app" ]
-        [ h1 [ class "app__title" ] [ text "ProspectFlow MVP" ]
+        [ -- Botão simples antes do título
+          div [ class "actions", attribute "style" "margin-bottom: 2rem; justify-content: flex-end;" ]
+            [ button [ class "btn btn--quiet", onClick ToggleLanguage ]
+                [ text (translate model.language LanguageToggle) ]
+            ]
+        , h1 [ class "app__title" ] [ text (translate model.language AppTitle) ]
         , viewInputs model
         , viewButtons model
         , viewExecutionLog model
@@ -33,7 +39,7 @@ viewMermaidError model =
     case model.mermaidError of
         Just err ->
             div [ class "alert", attribute "role" "alert" ]
-                [ text ("Mermaid Error: " ++ err) ]
+                [ text (translate model.language MermaidErrorPrefix ++ err) ]
 
         Nothing ->
             text ""
@@ -68,7 +74,7 @@ viewInputs : Model -> Html Msg
 viewInputs model =
     div [ class "inputs" ]
         [ div [ class "field" ]
-            [ label [ for "api-key" ] [ text "API Key (OpenAI)" ]
+            [ label [ for "api-key" ] [ text (translate model.language ApiKeyLabel) ]
             , input
                 [ id "api-key"
                 , type_ "password"
@@ -79,10 +85,10 @@ viewInputs model =
                 []
             ]
         , div [ class "field" ]
-            [ label [ for "workflow-text" ] [ text "Mermaid Workflow Definition" ]
+            [ label [ for "workflow-text" ] [ text (translate model.language WorkflowLabel) ]
             , textarea
                 [ id "workflow-text"
-                , placeholder "Node1[\"FETCH: https://...\"] --> Node2[\"PROMPT: Summarize {{input}}\"]"
+                , placeholder (translate model.language TriggerPlaceholder)
                 , value model.workflowText
                 , onInput UpdateWorkflowText
                 ]
@@ -95,10 +101,10 @@ viewInputs model =
                 viewMermaid model.workflowText
             ]
         , div [ class "field" ]
-            [ label [ for "trigger-input" ] [ text "Trigger Input" ]
+            [ label [ for "trigger-input" ] [ text (translate model.language TriggerLabel) ]
             , textarea
                 [ id "trigger-input"
-                , placeholder "Initial data or trigger text..."
+                , placeholder (translate model.language TriggerPlaceholder)
                 , value model.triggerInput
                 , onInput UpdateTriggerInput
                 ]
@@ -124,16 +130,16 @@ viewButtons model =
     in
     div [ class "actions" ]
         [ button [ type_ "button", class "btn btn--quiet", onClick SaveAgent ]
-            [ text "Save Agent" ]
+            [ text (translate model.language SaveAgentBtn) ]
         , button
             [ type_ "button"
             , class "btn"
             , onClick RunAgent
             , disabled runDisabled
             ]
-            [ text "Run Agent" ]
+            [ text (translate model.language RunAgentBtn) ]
         , if runDisabled && not (isError model.parsedPipeline) then
-            span [ class "actions__note" ] [ text "API Key required for PROMPT nodes." ]
+            span [ class "actions__note" ] [ text (translate model.language ApiKeyRequiredNote) ]
 
           else
             text ""
@@ -146,16 +152,16 @@ viewExecutionLog model =
         ( stateText, stateClass ) =
             case model.executionState of
                 Idle ->
-                    ( "Idle", "idle" )
+                    ( translate model.language StatusIdle, "idle" )
 
                 Running state ->
-                    ( "Running... Step " ++ String.fromInt (state.stepIndex + 1), "running" )
+                    ( translate model.language StatusRunning ++ String.fromInt (state.stepIndex + 1), "running" )
 
                 Completed _ ->
-                    ( "Completed!", "completed" )
+                    ( translate model.language StatusCompleted, "completed" )
 
                 Failed state ->
-                    ( "Failed: " ++ state.error, "failed" )
+                    ( translate model.language StatusFailed ++ state.error, "failed" )
 
         logs =
             case model.executionState of
@@ -173,7 +179,7 @@ viewExecutionLog model =
     in
     section [ class "log" ]
         [ h2 []
-            [ text "Execution Status: "
+            [ text (translate model.language ExecutionStatus)
             , span [ class ("status status--" ++ stateClass) ] [ text stateText ]
             ]
         , ol [ class "log__entries" ] (List.map viewLogEntry logs)

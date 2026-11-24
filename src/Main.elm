@@ -5,6 +5,7 @@ import Types exposing (..)
 import AppParser exposing (parsePipeline)
 import Engine exposing (startExecution, handleNodeResult)
 import View exposing (view)
+import Translations exposing (Language(..), TextId(..))
 
 main : Program () Model Msg
 main =
@@ -17,7 +18,8 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { workflowText = ""
+    ( { language = Pt
+      , workflowText = ""
       , triggerInput = ""
       , apiKey = ""
       , parsedPipeline = Err "No workflow defined."
@@ -57,6 +59,16 @@ update msg model =
 
         GotMermaidSuccess ->
             ( { model | mermaidError = Nothing }, Cmd.none )
+            
+        ToggleLanguage ->
+            let
+                newLang =
+                    if model.language == Pt then
+                        En
+                    else
+                        Pt
+            in
+            ( { model | language = newLang }, Cmd.none )
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =

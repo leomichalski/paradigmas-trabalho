@@ -1,6 +1,7 @@
 module Types exposing (..)
 
 import Http
+import Translations exposing (Language)
 
 type ActionType
     = Fetch
@@ -26,7 +27,8 @@ type ExecutionState
     | Failed { error : String, logs : List LogEntry }
 
 type alias Model =
-    { workflowText : String
+    { language : Language
+    , workflowText : String
     , triggerInput : String
     , apiKey : String
     , parsedPipeline : Result String (List PipelineNode)
@@ -40,6 +42,9 @@ type Msg
     | UpdateApiKey String
     | SaveAgent
     | RunAgent
-    | GotNodeResult (Result Http.Error String)
+    | GotNodeResult NodeResult
     | GotMermaidError String
     | GotMermaidSuccess
+    | ToggleLanguage
+
+type alias NodeResult = Result Http.Error String
