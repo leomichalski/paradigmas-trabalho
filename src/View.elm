@@ -9,20 +9,20 @@ import Types exposing (..)
 import Translations exposing (Language(..), TextId(..), translate)
 
 
-isError : Result e a -> Bool
-isError res =
-    case res of
-        Err _ ->
-            True
+-- isError : Result e a -> Bool
+-- isError res =
+--     case res of
+--         Err _ ->
+--             True
 
-        Ok _ ->
-            False
+--         Ok _ ->
+--             False
 
 
 view : Model -> Html Msg
 view model =
     main_ [ class "app" ]
-        [ -- Botão simples antes do título
+        [ 
           div [ class "actions", attribute "style" "margin-bottom: 2rem; justify-content: flex-end;" ]
             [ button [ class "btn btn--quiet", onClick ToggleLanguage ]
                 [ text (translate model.language LanguageToggle) ]
@@ -138,13 +138,18 @@ viewButtons model =
             , disabled runDisabled
             ]
             [ text (translate model.language RunAgentBtn) ]
-        , if runDisabled && not (isError model.parsedPipeline) then
-            span [ class "actions__note" ] [ text (translate model.language ApiKeyRequiredNote) ]
+            
+        , case model.parsedPipeline of
+            Err errMsg ->
+                if errMsg /= "No workflow defined." then
+                    span [ attribute "style" "color: var(--danger); margin-left: 1rem; font-weight: 600;" ] 
+                        [ text ("Erro no Parser: " ++ errMsg) ]
+                else
+                    text ""
 
-          else
-            text ""
+            Ok _ ->
+                text ""
         ]
-
 
 viewExecutionLog : Model -> Html Msg
 viewExecutionLog model =

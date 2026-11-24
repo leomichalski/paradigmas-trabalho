@@ -1,13 +1,14 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
+import Engine
 import Types exposing (..)
 import AppParser exposing (parsePipeline)
-import Engine exposing (startExecution, handleNodeResult)
 import View exposing (view)
 import Translations exposing (Language(..), TextId(..))
+port saveApiKey : String -> Cmd msg
 
-main : Program () Model Msg
+main : Program String Model Msg
 main =
     Browser.element
         { init = init
@@ -15,13 +16,12 @@ main =
         , update = update
         , subscriptions = subscriptions
         }
-
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : String -> ( Model, Cmd Msg )
+init savedApiKey =
     ( { language = Pt
       , workflowText = ""
       , triggerInput = ""
-      , apiKey = ""
+      , apiKey = savedApiKey
       , parsedPipeline = Err "No workflow defined."
       , executionState = Idle
       , mermaidError = Nothing
@@ -39,7 +39,7 @@ update msg model =
             ( { model | triggerInput = txt }, Cmd.none )
 
         UpdateApiKey txt ->
-            ( { model | apiKey = txt }, Cmd.none )
+            ( { model | apiKey = txt }, saveApiKey txt )
 
         SaveAgent ->
             let

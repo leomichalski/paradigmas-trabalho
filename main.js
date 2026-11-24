@@ -36,6 +36,19 @@ class MermaidElement extends HTMLElement {
 
 customElements.define('mermaid-element', MermaidElement);
 
+const savedKey = localStorage.getItem('geminiApiKey') || "";
+
+const app = Elm.Main.init({
+  node: document.getElementById('app'),
+  flags: savedKey
+});
+
+if (app.ports && app.ports.saveApiKey) {
+  app.ports.saveApiKey.subscribe(function(key) {
+    localStorage.setItem('geminiApiKey', key);
+  });
+}
+
 // Inicializa o Elm
 Elm.Main.init({
   node: document.getElementById('app')
