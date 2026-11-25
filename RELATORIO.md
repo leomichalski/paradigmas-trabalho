@@ -21,7 +21,7 @@
     existentes), não o conteúdo. Corrija todos os ERROS apontados.
 -->
 
-# [Nome do projeto]
+# ProspectFlow
 
 ## 1. Identificação
 
@@ -34,20 +34,20 @@
 
 | Nome completo | Matrícula | Turma (14h/16h) | Usuário GitHub |
 |---------------|-----------|-----------------|----------------|
-| [Nome]        | [000000]  | [14h]           | [@usuario]     |
+| Eduardo de Almeida Morais        | 231011275  | 16h           | @Edumorais08     |
 | [Nome]        | [000000]  | [16h]           | [@usuario]     |
 | [Nome]        | [000000]  | [14h]           | [@usuario]     |
 | [Nome]        | [000000]  | [16h]           | [@usuario]     |
 | [Nome]        | [000000]  | [14h]           | [@usuario]     |
 
-- **Nome do projeto:** [o mesmo do título acima]
-- **Nome do grupo:** [um nome criativo, que não se repita na turma]
+- **Nome do projeto:** ProspectFlow
+- **Nome do grupo:** Lambda Squad
   <!--
     O nome do grupo identifica vocês nas planilhas de notas e na chamada
     para a apresentação. Não dá para validar se é único, então caprichem:
     "Grupo 3" vai colidir com o "Grupo 3" da outra turma.
   -->
-- **Repositório:** [https://github.com/...]
+- **Repositório:** https://github.com/leomichalski/paradigmas-trabalho
 - **Commit ou tag entregue:** [`a1b2c3d` ou `v1.0`]
   <!--
     O avaliador vai olhar exatamente esta versão. Para criar uma tag:
@@ -67,14 +67,9 @@
 
 ## 2. Resumo
 
-<!--
-  De 3 a 5 linhas: o que o sistema faz, para quem, e qual problema o
-  Prolog resolve nele. Quem ler só esta seção deve entender o projeto.
--->
+ProspectFlow é um editor e executor de fluxos de automação com LLM, descritos em texto com uma sintaxe limitada do Mermaid. O frontend em Elm envia o fluxo para um backend FastAPI, e o Prolog executa o fluxo como uma máquina de estados (cada nó dispara um evento que escolhe o próximo passo), analisa o grafo e guarda os fluxos salvos como uma base de fatos consultável.
 
-[Resumo do projeto.]
-
-![Captura de tela do sistema](docs/captura.png)
+![Gif do Sistema](assets/demo.gif)
 <!-- Uma ou duas capturas de tela da interface. Crie a pasta docs/ se precisar. -->
 
 ## 3. Como executar
@@ -136,6 +131,12 @@
 |-----------|-------|-----------|
 | [`resolver(+Entrada, -Saida)`] | [`arquivo.pl:42`] | [...] |
 | [...] | [...] | [...] |
+| `salvar_fluxo(+Nome, +Texto, +Gatilho)` | `backend/prolog/armazenamento.pl:53` | Lê o diagrama com o parser do `fsm.pl` e grava o fluxo como fatos (texto, gatilho, nós e transições). Substitui o fluxo se o nome já existir |
+| `carregar_fluxo(+Nome, -Texto, -Gatilho)` | `backend/prolog/armazenamento.pl:86` | Devolve o diagrama e o gatilho de um fluxo salvo. Falha se ele não existe |
+| `fluxos_com_tipo(+Tipo, -Nomes)` | `backend/prolog/armazenamento.pl:129` | "Quais fluxos usam um nó POST?" |
+| `fluxos_com_evento(+Evento, -Nomes)` | `backend/prolog/armazenamento.pl:134` | "Quais fluxos tratam o evento `fetch_failed`?" |
+| `fluxos_com_ligacao(+TipoA, +TipoB, -Nomes)` | `backend/prolog/armazenamento.pl:140` | "Quais fluxos ligam um PROMPT direto a um POST?" Junta três fatos numa só consulta |
+| `tipo_da_acao(+Acao, -Tipo)` | `backend/prolog/armazenamento.pl:112` | `"PROMPT: Oi"` vira `prompt`, `"DONE"` vira `done` |
 
 ### 5.2 Conceitos do paradigma lógico utilizados
 
@@ -144,14 +145,14 @@
   tudo; é preciso explicar bem o que foi usado.
 -->
 
-- [ ] Fatos e regras como base de conhecimento: [onde]
+- [x] Fatos e regras como base de conhecimento: os fluxos salvos viram fatos `fluxo_no/3`, `fluxo_transicao/4`, `fluxo_texto/2` e `fluxo_gatilho/2`, gravados em arquivo com `library(persistency)` (`armazenamento.pl:31`); as consultas são regras sobre eles (`armazenamento.pl:125-145`). [outras partes: onde]
 - [ ] Unificação e casamento de padrões: [onde]
 - [ ] Recursão (inclusive sobre listas): [onde]
-- [ ] Backtracking e múltiplas soluções: [onde]
-- [ ] `findall/3`, `bagof/3`, `setof/3` ou similares: [onde]
+- [x] Backtracking e múltiplas soluções: `fluxos_com_ligacao/3` (`armazenamento.pl:140`) percorre por backtracking todas as transições e todos os nós que satisfazem a conjunção, e devolve todos os fluxos que casam. [outras partes: onde]
+- [x] `findall/3`, `bagof/3`, `setof/3` ou similares: `setof/3` com quantificador existencial `^` em `nomes_onde/3` (`armazenamento.pl:152`), que dá a lista de nomes ordenada e sem repetição. [outras partes: onde]
 - [ ] Corte (`!`) ou negação (`\+`), e por que foram necessários: [onde]
 - [ ] Programação por restrições (CLP(FD) ou outra): [onde]
-- [ ] Predicados de ordem superior (`maplist`, `foldl`, `include`...): [onde]
+- [x] Predicados de ordem superior (`maplist`, `foldl`, `include`...): `forall/2` para gravar cada nó e transição (`armazenamento.pl:63-66`); `maplist/3` com lambda da `library(yall)` para converter os nomes (`armazenamento.pl:154`); `nomes_onde/3` recebe o próprio objetivo da consulta como argumento. [outras partes: onde]
 - [ ] Outro: [...]
 
 ### 5.3 Trecho em destaque
@@ -186,14 +187,44 @@
 
 [Explicação das escolhas.]
 
+**Fluxos salvos (`frontend/src/Types.elm:27-67`).**
+
+```elm
+type SavedFlows
+    = LoadingFlows
+    | LoadedFlows (List String)
+    | FlowsFailed String
+
+type FlowFilter
+    = AllFlows
+    | UsingNode NodeType
+
+type StorageStatus
+    = NoStorageStatus
+    | StorageBusy
+    | StorageDone StorageAction String
+    | StorageFailed String
+```
+
+- `SavedFlows` em vez de `List String` mais um `Bool` de "carregando" e um
+  `Maybe String` de erro: com três campos soltos, a tela poderia estar
+  "carregando" e "com erro" ao mesmo tempo. Com o custom type, a lista só
+  existe dentro de `LoadedFlows`, e o `case` em `viewList`
+  (`frontend/src/StorageView.elm:153`) é obrigado a tratar os três estados.
+- `FlowFilter` usa `NodeType` em vez de `String`: o filtro só pode ser um tipo
+  de nó que existe. A conversão para a string que o Prolog espera fica num
+  único lugar (`nodeTypeToString`, `frontend/src/StorageApi.elm:118`).
+- `StorageDone` guarda qual ação terminou (`FlowSaved`, `FlowOpened`,
+  `FlowDeleted`) e o nome do fluxo, para a mensagem de confirmação certa.
+
 ### 6.2 Conceitos do paradigma funcional utilizados
 
 - [ ] Arquitetura Elm (Model, update, view): [onde]
-- [ ] Custom types e `case` exaustivo: [onde]
+- [x] Custom types e `case` exaustivo: `SavedFlows` e `StorageStatus` em `viewList` e `viewStatus` (`frontend/src/StorageView.elm:80`, `:153`); cada texto novo da tela é um construtor de `TextId`, e `translate` não compila se faltar a versão em pt ou en (`frontend/src/Translations.elm`). [outras partes: onde]
 - [ ] `Maybe` e `Result` no lugar de null e exceções: [onde]
 - [ ] Funções de ordem superior e aplicação parcial: [onde]
-- [ ] Composição (`|>`, `>>`): [onde]
-- [ ] Decoders e encoders JSON: [onde]
+- [x] Composição (`|>`, `>>`): `filterFromString` (`frontend/src/StorageView.elm:121`) com `|>`; `onInput (filterFromString >> ChangeFlowFilter)` no `<select>` do filtro. [outras partes: onde]
+- [x] Decoders e encoders JSON: `savedFlowDecoder`, que usa `Decode.oneOf` para aceitar fluxos sem gatilho (`frontend/src/StorageApi.elm:92`), e o encoder em `saveFlow` (`frontend/src/StorageApi.elm:63`). [outras partes: onde]
 - [ ] Comandos e subscriptions (efeitos controlados): [onde]
 - [ ] Imutabilidade e atualização de records: [onde]
 - [ ] Outro: [...]
@@ -217,6 +248,10 @@
 | Rota / chamada | Entrada | Saída | Predicado Prolog |
 |----------------|---------|-------|------------------|
 | [`POST /api/...`] | [...] | [...] | [`...`] |
+| `GET /fluxos` | `?tipo=post` (opcional) | `{"fluxos": ["a", "b"]}` | `fluxos_salvos/1` ou `fluxos_com_tipo/2` |
+| `POST /fluxos` | `{"nome", "diagram_text", "trigger_input"}` | `{"nome"}`; 400 se o nome for vazio ou o diagrama não tiver nós | `salvar_fluxo/3` |
+| `GET /fluxos/{nome}` | — | `{"nome", "diagram_text", "trigger_input"}`; 404 se não existir | `carregar_fluxo/3` |
+| `DELETE /fluxos/{nome}` | — | `{"nome"}`; 404 se não existir | `remover_fluxo/1` |
 
 ## 8. Testes e validação
 
@@ -227,6 +262,18 @@
 
 - [O que foi testado e como.]
 - [Casos de borda considerados.]
+- **Armazenamento (parte 2):** 24 testes plunit em
+  `backend/prolog/test_armazenamento.pl` (`make test-prolog`) e 14 testes
+  pytest das rotas em `backend/tests/test_fluxos.py`, rodando o Prolog de
+  verdade. Cada teste usa um arquivo de base temporário.
+- **Casos de borda do armazenamento:** nome vazio ou só com espaços (recusado,
+  400); diagrama sem nós (recusado, 400); fluxo inexistente (404); salvar de
+  novo com o mesmo nome (substitui, inclusive o gatilho); nome com espaço e
+  acento na URL; fluxo sem gatilho aberto depois de um com gatilho (o campo é
+  limpo); fluxos salvos antes de existir o gatilho (abrem com gatilho vazio);
+  fechar e reabrir a base (os fluxos continuam lá); nome com aspas e
+  parênteses, como `x"), halt, ("`, que é guardado como texto e não vira
+  código Prolog.
 
 ## 9. Limitações e problemas conhecidos
 
@@ -238,6 +285,7 @@
 - [Limitação ou bug conhecido, e em que situação acontece.]
 - [O que o grupo faria com mais tempo.]
 
+
 ## 10. Contribuição de cada integrante
 
 <!--
@@ -247,7 +295,7 @@
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
-| [Nome]     | [...] |
+| Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`) |
 | [Nome]     | [...] |
 | [Nome]     | [...] |
 | [Nome]     | [...] |
@@ -285,6 +333,7 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
 | [Nome ou "nenhuma"] | [...] | [...] |
+| Claude | Gerou o código da parte de armazenamento (Prolog do armazenamento, rotas `/fluxos`, tela "Fluxos salvos" em Elm) e os testes; explicou o código e ajudou a configurar o ambiente, porém tudo foi revisado pelo grupo | Testes automatizados (plunit e pytest), roteiro de teste manual na tela, revisão do código e explicação de cada parte |
 
 ## 12. Apresentação oral
 
