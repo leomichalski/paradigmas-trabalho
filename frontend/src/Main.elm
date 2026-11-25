@@ -2,6 +2,7 @@ port module Main exposing (main)
 
 import Browser
 import Api
+import StorageApi
 import Http
 import Types exposing (..)
 import View exposing (view)
@@ -24,8 +25,12 @@ init savedApiKey =
       , apiKey = savedApiKey
       , executionState = Idle
       , mermaidError = Nothing
+      , flowName = ""
+      , savedFlows = LoadingFlows
+      , flowFilter = AllFlows
+      , storageStatus = NoStorageStatus
       }
-    , Cmd.none
+    , StorageApi.listFlows AllFlows
     )
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -80,6 +85,61 @@ update msg model =
                         Pt
             in
             ( { model | language = newLang }, Cmd.none )
+
+        -- armazenamento de fluxos
+        UpdateFlowName name ->
+            ( { model | flowName = name }, Cmd.none )
+
+        ChangeFlowFilter filter ->
+            ( { model | flowFilter = filter, savedFlows = LoadingFlows }
+            , StorageApi.listFlows filter
+            )
+
+        SaveFlow ->
+            ( { model | storageStatus = StorageBusy }
+            , StorageApi.saveFlow (String.trim model.flowName) model.workflowText
+            )
+
+        OpenFlow name ->
+            ( { model | storageStatus = StorageBusy }, StorageApi.openFlow name )
+
+        DeleteFlow name ->
+            ( { model | storageStatus = StorageBusy }, StorageApi.deleteFlow name )
+
+        GotFlowList (Ok names) ->
+            ( { model | savedFlows = LoadedFlows names }, Cmd.none )
+
+        GotFlowList (Err httpErr) ->
+            ( { model | savedFlows = FlowsFailed (httpErrorToString httpErr) }, Cmd.none )
+
+        GotSaveResult name (Ok ()) ->
+            ( { model | storageStatus = StorageDone FlowSaved name }
+            , StorageApi.listFlows model.flowFilter
+            )
+
+        GotOpenResult name (Ok diagram) ->
+            ( { model
+                | workflowText = diagram
+                , flowName = name
+                , mermaidError = Nothing
+                , storageStatus = StorageDone FlowOpened name
+              }
+            , Cmd.none
+            )
+
+        GotDeleteResult name (Ok ()) ->
+            ( { model | storageStatus = StorageDone FlowDeleted name }
+            , StorageApi.listFlows model.flowFilter
+            )
+
+        GotSaveResult _ (Err httpErr) ->
+            ( { model | storageStatus = StorageFailed (httpErrorToString httpErr) }, Cmd.none )
+
+        GotOpenResult _ (Err httpErr) ->
+            ( { model | storageStatus = StorageFailed (httpErrorToString httpErr) }, Cmd.none )
+
+        GotDeleteResult _ (Err httpErr) ->
+            ( { model | storageStatus = StorageFailed (httpErrorToString httpErr) }, Cmd.none )
 
 httpErrorToString : Http.Error -> String
 httpErrorToString err =

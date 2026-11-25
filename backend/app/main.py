@@ -7,8 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app import prolog
+from app.rotas_fluxos import router as rotas_fluxos
 
 app = FastAPI(title="Editor de Fluxos")
+app.include_router(rotas_fluxos)
 
 # In development mode, allow cross-origin requests from the frontend
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production").lower()
