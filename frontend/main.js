@@ -48,8 +48,3 @@ if (app.ports && app.ports.saveApiKey) {
     localStorage.setItem('geminiApiKey', key);
   });
 }
-
-// Inicializa o Elm
-Elm.Main.init({
-  node: document.getElementById('app')
-});

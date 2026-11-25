@@ -1,12 +1,12 @@
 # ProspectFlow
 
-ProspectFlow is an Elm-based MVP for a text-based LLM Workflow Engine. The application allows users to define a sequential pipeline of data enrichment and LLM prompts using a limited Mermaid.js syntax. It executes the pipeline entirely in the browser using The Elm Architecture (TEA) with no backend, relying on `elm/http` for API chaining.
+ProspectFlow is an Elm-based MVP for a text-based LLM Workflow Engine. The application allows users to define a sequential pipeline of data enrichment and LLM prompts using a limited Mermaid.js syntax. The Elm frontend (The Elm Architecture) sends the workflow to a FastAPI backend, where a Prolog engine executes it.
 
 ![App Demo](assets/demo.gif)
 
 ## Features
 
-- **Browser-Native Execution:** Runs entirely in the client with no backend dependencies, using Elm's robust state management.
+- **Backend Execution:** Workflows are executed by a Prolog state machine behind a FastAPI endpoint (`POST /execute`).
 - **Custom Mermaid Parser:** Uses `elm/parser` (strictly no regex) to parse linear workflow definitions, cleanly mapping them to domain types.
 - **Workflow State Machine:** A sequential execution engine that passes the output of one step into the `{{input}}` token of the next step.
 - **HTTP Actions:** Supports three primary actions:
@@ -22,16 +22,19 @@ ProspectFlow is an Elm-based MVP for a text-based LLM Workflow Engine. The appli
 - [Node.js](https://nodejs.org/) (v20+ recommended)
 - [pnpm](https://pnpm.io/)
 - [Elm](https://guide.elm-lang.org/install/elm.html) (0.19.1+)
+- [Docker](https://www.docker.com/) (or [uv](https://docs.astral.sh/uv/) + [SWI-Prolog](https://www.swi-prolog.org/) to run the backend without Docker)
 
 ### Installation
 
-1. Clone the repository and navigate to the project directory:
+1. Start the backend (`http://localhost:8000`) from the repository root:
    ```bash
-   cd prospectflow
+   docker compose up --build
    ```
+   Without Docker: `cd backend && uv sync && ENVIRONMENT=dev uv run fastapi dev app/main.py` (`ENVIRONMENT=dev` enables CORS for the frontend).
 
-2. Install the dependencies:
+2. In another terminal, install the frontend dependencies (the Elm app lives in `frontend/`, not `frontend/prospectflow/`):
    ```bash
+   cd frontend
    pnpm install
    ```
 
