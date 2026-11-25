@@ -66,8 +66,7 @@ run_node(Nodes, Transitions, Node-Ctx, result(Logs, Next)) :-
     append(LTsRev, NodeLogs, Logs).
 
 next_transition(Transitions, Node, Event, Dst) :-
-    member(transition(Node, E, Dst), Transitions),
-    atom_string(E, Event).
+    member(transition(Node, Event, Dst), Transitions).
 
 % Logs are kept newest first, like in the rest of the executor
 accumulate(result(Logs, Next), Active0-LogsIn, Active-LogsOut) :-
