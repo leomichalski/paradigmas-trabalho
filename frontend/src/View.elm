@@ -116,40 +116,28 @@ viewInputs model =
 viewButtons : Model -> Html Msg
 viewButtons model =
     let
-        runDisabled =
-            case model.parsedPipeline of
-                Err _ ->
-                    True
+        isRunning =
+            model.executionState == Running
 
-                Ok nodes ->
-                    let
-                        hasPrompt =
-                            List.any (\n -> n.actionType == Prompt) nodes
-                    in
-                    hasPrompt && String.isEmpty (String.trim model.apiKey)
+        needsApiKey =
+            String.contains "PROMPT:" model.workflowText
+                && String.isEmpty (String.trim model.apiKey)
+
+        runDisabled =
+            isRunning
+                || String.isEmpty (String.trim model.workflowText)
+                || needsApiKey
     in
     div [ class "actions" ]
-        [ button [ type_ "button", class "btn btn--quiet", onClick SaveAgent ]
-            [ text (translate model.language SaveAgentBtn) ]
-        , button
+        [ button
             [ type_ "button"
             , class "btn"
             , onClick RunAgent
             , disabled runDisabled
             ]
             [ text (translate model.language RunAgentBtn) ]
-            
-        , case model.parsedPipeline of
-            Err errMsg ->
-                if errMsg /= "No workflow defined." then
-                    span [ attribute "style" "color: var(--danger); margin-left: 1rem; font-weight: 600;" ] 
-                        [ text ("Erro no Parser: " ++ errMsg) ]
-                else
-                    text ""
-
-            Ok _ ->
-                text ""
         ]
+
 
 viewExecutionLog : Model -> Html Msg
 viewExecutionLog model =
@@ -159,8 +147,8 @@ viewExecutionLog model =
                 Idle ->
                     ( translate model.language StatusIdle, "idle" )
 
-                Running state ->
-                    ( translate model.language StatusRunning ++ String.fromInt (state.stepIndex + 1), "running" )
+                Running ->
+                    ( translate model.language StatusRunning, "running" )
 
                 Completed _ ->
                     ( translate model.language StatusCompleted, "completed" )
@@ -171,10 +159,10 @@ viewExecutionLog model =
         logs =
             case model.executionState of
                 Idle ->
-                    []
+                    ""
 
-                Running state ->
-                    state.logs
+                Running ->
+                    ""
 
                 Completed state ->
                     state.logs
@@ -187,17 +175,9 @@ viewExecutionLog model =
             [ text (translate model.language ExecutionStatus)
             , span [ class ("status status--" ++ stateClass) ] [ text stateText ]
             ]
-        , ol [ class "log__entries" ] (List.map viewLogEntry logs)
-        ]
+        , if String.isEmpty (String.trim logs) then
+            text ""
 
-
-viewLogEntry : LogEntry -> Html Msg
-viewLogEntry entry =
-    li [ class "entry" ]
-        [ p [ class "entry__head" ]
-            [ span [ class ("tag tag--" ++ String.toLower entry.actionName) ]
-                [ text entry.actionName ]
-            , span [ class "entry__step" ] [ text entry.stepId ]
-            ]
-        , pre [ class "entry__output" ] [ text entry.output ]
+          else
+            pre [ class "entry__output" ] [ text logs ]
         ]

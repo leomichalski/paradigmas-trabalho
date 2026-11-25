@@ -3,48 +3,37 @@ module Types exposing (..)
 import Http
 import Translations exposing (Language)
 
-type ActionType
-    = Fetch
-    | Prompt
-    | Post
 
-type alias PipelineNode =
-    { id : String
-    , actionType : ActionType
-    , payload : String
+type alias ExecutionResponse =
+    { status : String
+    , message : String
+    , logs : String
     }
 
-type alias LogEntry =
-    { stepId : String
-    , actionName : String
-    , output : String
-    }
 
 type ExecutionState
     = Idle
-    | Running { stepIndex : Int, latestOutput : String, logs : List LogEntry }
-    | Completed { logs : List LogEntry }
-    | Failed { error : String, logs : List LogEntry }
+    | Running
+    | Completed { message : String, logs : String }
+    | Failed { error : String, logs : String }
+
 
 type alias Model =
     { language : Language
     , workflowText : String
     , triggerInput : String
     , apiKey : String
-    , parsedPipeline : Result String (List PipelineNode)
     , executionState : ExecutionState
     , mermaidError : Maybe String
     }
+
 
 type Msg
     = UpdateWorkflowText String
     | UpdateTriggerInput String
     | UpdateApiKey String
-    | SaveAgent
     | RunAgent
-    | GotNodeResult NodeResult
+    | GotExecutionResult (Result Http.Error ExecutionResponse)
     | GotMermaidError String
     | GotMermaidSuccess
     | ToggleLanguage
-
-type alias NodeResult = Result Http.Error String

@@ -10,7 +10,6 @@ type TextId
     | WorkflowLabel
     | TriggerLabel
     | TriggerPlaceholder
-    | SaveAgentBtn
     | RunAgentBtn
     | ApiKeyRequiredNote
     | StatusIdle
@@ -39,9 +38,6 @@ translate lang textId =
         ( Pt, TriggerPlaceholder ) -> "Dado inicial ou texto de gatilho..."
         ( En, TriggerPlaceholder ) -> "Initial data or trigger text..."
 
-        ( Pt, SaveAgentBtn ) -> "Salvar Agente"
-        ( En, SaveAgentBtn ) -> "Save Agent"
-
         ( Pt, RunAgentBtn ) -> "Executar Agente"
         ( En, RunAgentBtn ) -> "Run Agent"
 
@@ -51,8 +47,8 @@ translate lang textId =
         ( Pt, StatusIdle ) -> "Ocioso"
         ( En, StatusIdle ) -> "Idle"
 
-        ( Pt, StatusRunning ) -> "Executando... Passo "
-        ( En, StatusRunning ) -> "Running... Step "
+        ( Pt, StatusRunning ) -> "Executando..."
+        ( En, StatusRunning ) -> "Running..."
 
         ( Pt, StatusCompleted ) -> "Concluído!"
         ( En, StatusCompleted ) -> "Completed!"
