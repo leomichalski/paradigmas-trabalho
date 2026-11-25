@@ -30,10 +30,14 @@ graph TD
     summarize -->|generation_failed| abort
     send -->|request_succeeded| done
     send -->|request_failed| abort
-"""):
+""",
+    trigger_input=None
+):
     # Escape quotes and newlines for Prolog query string
     diagram_escaped = diagram_text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-    query_str = f"execute_workflow_from_text('{diagram_escaped}', '{api_key}', LogOut)"
+    safe_trigger = trigger_input if trigger_input is not None else ""
+    trigger_escaped = safe_trigger.replace("\\", "\\\\").replace("'", "\\'")
+    query_str = f"execute_workflow_from_text('{diagram_escaped}', '{trigger_escaped}', '{api_key}', LogOut)"
 
     result = list(pyswipProlog.query(query_str))
     if result:

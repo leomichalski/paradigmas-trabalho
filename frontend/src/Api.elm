@@ -17,21 +17,30 @@ endpoint =
     { "api_key": "...", "diagram_text": "graph TD ..." }
 
 -}
-runAgent : { diagram : String, apiKey : String } -> Cmd Msg
-runAgent { diagram, apiKey } =
+runAgent : { diagram : String, triggerInput : String, apiKey : String } -> Cmd Msg
+runAgent { diagram, triggerInput, apiKey } =
     Http.post
         { url = endpoint
-        , body = Http.jsonBody (requestEncoder diagram apiKey)
+        , body = Http.jsonBody (requestEncoder diagram triggerInput apiKey)
         , expect = Http.expectJson GotExecutionResult responseDecoder
         }
 
 
-requestEncoder : String -> String -> Encode.Value
-requestEncoder diagram apiKey =
-    Encode.object
-        [ ( "api_key", Encode.string apiKey )
-        , ( "diagram_text", Encode.string diagram )
-        ]
+requestEncoder : String -> String -> String -> Encode.Value
+requestEncoder diagram triggerInput apiKey =
+    let
+        baseFields =
+            [ ( "api_key", Encode.string apiKey )
+            , ( "diagram_text", Encode.string diagram )
+            ]
+
+        fields =
+            if String.isEmpty triggerInput then
+                baseFields
+            else
+                baseFields ++ [ ( "trigger_input", Encode.string triggerInput ) ]
+    in
+    Encode.object fields
 
 
 {-| Resposta:

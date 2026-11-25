@@ -24,16 +24,19 @@ if ENVIRONMENT in ("dev", "development", "debug"):
 class ExecuteRequest(BaseModel):
     api_key: str
     diagram_text: str
+    trigger_input: str | None = None
 
 @app.post("/execute")
 def call_execute_workflow(request: ExecuteRequest):
     try:
         user_api_key = request.api_key
         user_diagram = request.diagram_text
+        user_trigger = request.trigger_input
 
         logs = prolog.execute_workflow(
             api_key=user_api_key,
-            diagram_text=user_diagram
+            diagram_text=user_diagram,
+            trigger_input=user_trigger
         )
 
         # FastAPI will automatically serialize this dictionary to JSON

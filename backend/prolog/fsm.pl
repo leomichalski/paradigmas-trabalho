@@ -32,12 +32,12 @@ parse_mermaid_text(Text, Nodes, Transitions) :-
     parse_lines(Lines, Nodes, Transitions).
 
 % Executor
-execute_workflow_from_text(Text, ApiKey, LogOut) :-
+execute_workflow_from_text(Text, TriggerInput, ApiKey, LogOut) :-
     parse_mermaid_text(Text, Nodes, Transitions),
     % Find start state
     Nodes = [node(Start, _) | _],
     format(string(Log1), "Starting workflow at state: ~w\n", [Start]),
-    run_state(Start, Nodes, Transitions, _{api_key: ApiKey}, [Log1], LogsReversed),
+    run_state(Start, Nodes, Transitions, _{api_key: ApiKey, input: TriggerInput}, [Log1], LogsReversed),
     reverse(LogsReversed, LogsForward),
     atomics_to_string(LogsForward, "", LogOut).
 
@@ -54,8 +54,9 @@ run_state(State, Nodes, Transitions, Context, LogsIn, LogsOut) :-
                 ),
                 NextContext = Context.put(input, Response),
                 Event = "fetch_succeeded",
-                sub_string(Response, 0, 100, _, RespPreview),
-                format(string(L2), "FETCH succeeded.\nResponse preview: ~w...\n", [RespPreview]),
+                string_length(Response, ResLen),
+                ( ResLen > 100 -> sub_string(Response, 0, 100, _, RespPreviewT) ; RespPreviewT = Response ),
+                format(string(L2), "FETCH succeeded.\nResponse preview: ~w...\n", [RespPreviewT]),
                 append([L2, L1], LogsIn, LogsMid)
             ),
             Error,
@@ -77,7 +78,8 @@ run_state(State, Nodes, Transitions, Context, LogsIn, LogsOut) :-
         ;   FinalPrompt = PromptTpl
         ),
         
-        sub_string(FinalPrompt, 0, 150, _, PromptPreview),
+        string_length(FinalPrompt, PromptLen),
+        ( PromptLen > 150 -> sub_string(FinalPrompt, 0, 150, _, PromptPreview) ; PromptPreview = FinalPrompt ),
         format(string(L1), "Executing PROMPT with OpenAI GPT-4o-mini...\nPrompt payload preview: ~w...\n", [PromptPreview]),
         ApiKey = Context.api_key,
 
@@ -103,13 +105,13 @@ run_state(State, Nodes, Transitions, Context, LogsIn, LogsOut) :-
                 Answer = Choice.message.content,
 
                 NextContext = Context.put(answer, Answer),
-                Event = "summary_generated",
+                Event = "prompt_succeeded",
                 format(string(L2), "PROMPT succeeded.\nResponse:\n~w\n", [Answer]),
                 append([L2, L1], LogsIn, LogsMid)
             ),
             Error,
             (   format(string(L2), "PROMPT failed: ~w\n", [Error]),
-                Event = "generation_failed",
+                Event = "prompt_failed",
                 NextContext = Context,
                 append([L2, L1], LogsIn, LogsMid)
             )

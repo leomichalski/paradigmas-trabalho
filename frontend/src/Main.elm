@@ -44,6 +44,7 @@ update msg model =
             ( { model | executionState = Running }
             , Api.runAgent
                 { diagram = model.workflowText
+                , triggerInput = model.triggerInput
                 , apiKey = model.apiKey
                 }
             )
