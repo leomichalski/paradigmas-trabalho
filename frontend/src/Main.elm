@@ -1,9 +1,9 @@
 port module Main exposing (main)
 
 import Browser
-import Engine
+import Api
+import Http
 import Types exposing (..)
-import AppParser exposing (parsePipeline)
 import View exposing (view)
 import Translations exposing (Language(..), TextId(..))
 port saveApiKey : String -> Cmd msg
@@ -22,7 +22,6 @@ init savedApiKey =
       , workflowText = ""
       , triggerInput = ""
       , apiKey = savedApiKey
-      , parsedPipeline = Err "No workflow defined."
       , executionState = Idle
       , mermaidError = Nothing
       }
@@ -41,18 +40,29 @@ update msg model =
         UpdateApiKey txt ->
             ( { model | apiKey = txt }, saveApiKey txt )
 
-        SaveAgent ->
-            let
-                parsed =
-                    parsePipeline model.workflowText
-            in
-            ( { model | parsedPipeline = parsed }, Cmd.none )
-
         RunAgent ->
-            Engine.startExecution model
+            ( { model | executionState = Running }
+            , Api.runAgent
+                { diagram = model.workflowText
+                , apiKey = model.apiKey
+                }
+            )
 
-        GotNodeResult res ->
-            Engine.handleNodeResult model res
+        GotExecutionResult (Ok response) ->
+            if response.status == "success" then
+                ( { model | executionState = Completed { message = response.message, logs = response.logs } }
+                , Cmd.none
+                )
+
+            else
+                ( { model | executionState = Failed { error = response.message, logs = response.logs } }
+                , Cmd.none
+                )
+
+        GotExecutionResult (Err httpErr) ->
+            ( { model | executionState = Failed { error = httpErrorToString httpErr, logs = "" } }
+            , Cmd.none
+            )
 
         GotMermaidError err ->
             ( { model | mermaidError = Just err }, Cmd.none )
@@ -69,6 +79,28 @@ update msg model =
                         Pt
             in
             ( { model | language = newLang }, Cmd.none )
+
+httpErrorToString : Http.Error -> String
+httpErrorToString err =
+    case err of
+        Http.BadUrl url ->
+            "Bad URL: " ++ url
+
+        Http.Timeout ->
+            "Network Timeout"
+
+        Http.NetworkError ->
+            "Network Error"
+
+        Http.BadStatus 401 ->
+            "Unauthorized: Please check your API Key."
+
+        Http.BadStatus status ->
+            "Bad Status: " ++ String.fromInt status
+
+        Http.BadBody bodyErr ->
+            "Bad Body: " ++ bodyErr
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =

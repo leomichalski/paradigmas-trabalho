@@ -48,7 +48,18 @@ ProspectFlow is an Elm-based MVP for a text-based LLM Workflow Engine. The appli
 2. **Define Workflow:** Enter a linear pipeline using the limited Mermaid syntax. Example:
    ```mermaid
    graph TD
-       Start["FETCH: https://jsonplaceholder.typicode.com/posts/1"] --> Summarize["PROMPT: Summarize the following JSON: {{input}}"] --> Send["POST: https://httpbin.org/post"]
+      start["FETCH: https://jsonplaceholder.typicode.com/posts/1"]
+      summarize["PROMPT: Summarize the following JSON: {{input}}"]
+      send["POST: https://httpbin.org/post"]
+      abort["ABORT"]
+      done["DONE"]
+
+      start -->|fetch_succeeded| summarize
+      start -->|fetch_failed| abort
+      summarize -->|summary_generated| send
+      summarize -->|generation_failed| abort
+      send -->|request_succeeded| done
+      send -->|request_failed| abort
    ```
 3. **Trigger Input:** Provide any initial data to trigger the workflow. This will replace the `{{input}}` token in the first node.
 4. **Save & Run:** Click "Save Agent" to parse the workflow, and then "Run Agent" to kick off the execution. Watch the Execution Status logs as it progresses step by step!

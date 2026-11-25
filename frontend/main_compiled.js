@@ -5456,7 +5456,20 @@ var $author$project$View$viewInputs = function (model) {
 						$elm$html$Html$textarea,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$placeholder('Node1[\u0022FETCH: https://...\u0022] --> Node2[\u0022PROMPT: Summarize {{input}}\u0022]'),
+								$elm$html$Html$Attributes$placeholder(`graph TD
+									start[\u0022FETCH: https://jsonplaceholder.typicode.com/posts/1\u0022]
+									summarize[\u0022PROMPT: Summarize the following JSON: {{input}}\u0022]
+									send[\u0022POST: https://httpbin.org/post\u0022]
+									abort[\u0022ABORT\u0022]
+									done[\u0022DONE\u0022]
+
+									start -->|fetch_succeeded| summarize
+									start -->|fetch_failed| abort
+									summarize -->|summary_generated| send
+									summarize -->|generation_failed| abort
+									send -->|request_succeeded| done
+									send -->|request_failed| abort
+								`),
 								$elm$html$Html$Attributes$value(model.workflowText),
 								$elm$html$Html$Events$onInput($author$project$Types$UpdateWorkflowText),
 								A2($elm$html$Html$Attributes$style, 'width', '100%'),
