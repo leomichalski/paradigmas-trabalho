@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       elm:
-        specifier: 0.19.3-0
-        version: 0.19.3-0
+        specifier: 0.19.1-6
+        version: 0.19.1-6
       elm-format:
         specifier: ^0.8.8
         version: 0.8.8
@@ -45,28 +45,23 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@elm_binaries/darwin_arm64@0.19.3-0':
-    resolution: {integrity: sha512-Kp6w7gkwm9y2aoR3LK93J5UteHkqDd+l1xsnxdg6C6PDkC/djD1qqS3o02Z9ajkFjbgGezARfpwOp/efbqKLOQ==}
+  '@elm_binaries/darwin_arm64@0.19.1-0':
+    resolution: {integrity: sha512-mjbsH7BNHEAmoE2SCJFcfk5fIHwFIpxtSgnEAqMsVLpBUFoEtAeX+LQ+N0vSFJB3WAh73+QYx/xSluxxLcL6dA==}
     cpu: [arm64]
     os: [darwin]
 
-  '@elm_binaries/darwin_x64@0.19.3-0':
-    resolution: {integrity: sha512-sAoiyg/fcwbhQzep0dpoV54y8qIVGRHjDssgTBI6hsptLJfQcCXmcNyvwJNqYeXqBYMMPw1fxlna2QFfXVwdvA==}
+  '@elm_binaries/darwin_x64@0.19.1-0':
+    resolution: {integrity: sha512-QGUtrZTPBzaxgi9al6nr+9313wrnUVHuijzUK39UsPS+pa+n6CmWyV/69sHZeX9qy6UfeugE0PzF3qcUiy2GDQ==}
     cpu: [x64]
     os: [darwin]
 
-  '@elm_binaries/linux_arm64@0.19.3-0':
-    resolution: {integrity: sha512-MRIBxYsHw3jyjXBFRcawADDVM+zn3RqgPPfmHLbhvRDBXrNfbIH1iXh0jMBH4ykBOtGvihk2UGvP0LAwytrOjA==}
-    cpu: [arm64]
-    os: [linux]
-
-  '@elm_binaries/linux_x64@0.19.3-0':
-    resolution: {integrity: sha512-x+WXNkRZUOuyGPdcRo137rNW1+7KBVXLf2L9oul21tj3MKpE7HC7Kl5VpyWj859YLdYv9M42S2O6YiO9t+MJeQ==}
+  '@elm_binaries/linux_x64@0.19.1-0':
+    resolution: {integrity: sha512-T1ZrWVhg2kKAsi8caOd3vp/1A3e21VuCpSG63x8rDie50fHbCytTway9B8WHEdnBFv4mYWiA68dzGxYCiFmU2w==}
     cpu: [x64]
     os: [linux]
 
-  '@elm_binaries/win32_x64@0.19.3-0':
-    resolution: {integrity: sha512-spoFyfLUq5+sFCuTei3nGgslYMnxuZJAbto/mBd5jbFgZqaf+GGmmuW49YlvMI///S7G+VFR4fn3bgRZJJ1Q7w==}
+  '@elm_binaries/win32_x64@0.19.1-0':
+    resolution: {integrity: sha512-yDleiXqSE9EcqKtd9SkC/4RIW8I71YsXzMPL79ub2bBPHjWTcoyyeBbYjoOB9SxSlArJ74HaoBApzT6hY7Zobg==}
     cpu: [x64]
     os: [win32]
 
@@ -102,8 +97,8 @@ packages:
     engines: {node: '>=12.20.0'}
     hasBin: true
 
-  elm@0.19.3-0:
-    resolution: {integrity: sha512-k7M033Vbzsi4w7G0kByQToRnVK5yaEddzNXTZynRXaJYzwhMI17RRP7GGxdieiIL5kurl2w07ht6/4yQudJ9HA==}
+  elm@0.19.1-6:
+    resolution: {integrity: sha512-mKYyierHICPdMx/vhiIacdPmTPnh889gjHOZ75ZAoCxo3lZmSWbGP8HMw78wyctJH0HwvTmeKhlYSWboQNYPeQ==}
     engines: {node: '>=7.0.0'}
     hasBin: true
 
@@ -194,19 +189,16 @@ snapshots:
   '@avh4/elm-format-win32-x64@0.8.8-1':
     optional: true
 
-  '@elm_binaries/darwin_arm64@0.19.3-0':
+  '@elm_binaries/darwin_arm64@0.19.1-0':
     optional: true
 
-  '@elm_binaries/darwin_x64@0.19.3-0':
+  '@elm_binaries/darwin_x64@0.19.1-0':
     optional: true
 
-  '@elm_binaries/linux_arm64@0.19.3-0':
+  '@elm_binaries/linux_x64@0.19.1-0':
     optional: true
 
-  '@elm_binaries/linux_x64@0.19.3-0':
-    optional: true
-
-  '@elm_binaries/win32_x64@0.19.3-0':
+  '@elm_binaries/win32_x64@0.19.1-0':
     optional: true
 
   anymatch@3.1.3:
@@ -252,13 +244,12 @@ snapshots:
       tinyglobby: 0.2.17
       which: 2.0.2
 
-  elm@0.19.3-0:
+  elm@0.19.1-6:
     optionalDependencies:
-      '@elm_binaries/darwin_arm64': 0.19.3-0
-      '@elm_binaries/darwin_x64': 0.19.3-0
-      '@elm_binaries/linux_arm64': 0.19.3-0
-      '@elm_binaries/linux_x64': 0.19.3-0
-      '@elm_binaries/win32_x64': 0.19.3-0
+      '@elm_binaries/darwin_arm64': 0.19.1-0
+      '@elm_binaries/darwin_x64': 0.19.1-0
+      '@elm_binaries/linux_x64': 0.19.1-0
+      '@elm_binaries/win32_x64': 0.19.1-0
 
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
