@@ -264,6 +264,9 @@ type StorageStatus
 
 - [O que foi testado e como.]
 - [Casos de borda considerados.]
+- **Frontend (elm-test):** 75 testes em `frontend/tests/` (`make test-elm`), todos sobre funções puras, sem navegador nem backend. `DomainTest` e `FlowParserTest` cobrem os casos de borda do domínio: texto vazio, nó duplicado, ligação para nó não declarado, ciclo (inclusive auto-laço), losango e ligações duplas que não são ciclo, fim de linha do Windows (`\r\n`) e `PROMPT` com dois-pontos no texto. `ApiErrorTest` cobre os formatos de erro do FastAPI (`detail` em texto, em lista no 422, corpo que não é JSON, corpo vazio).
+- **Prolog (fsm.pl):** [N] testes plunit em `backend/prolog/test_fsm.pl` (`make test-prolog`) para [o que eles cobrem].
+
 - **Armazenamento (parte 2):** 24 testes plunit em
   `backend/prolog/test_armazenamento.pl` (`make test-prolog`) e 14 testes
   pytest das rotas em `backend/tests/test_fluxos.py`, rodando o Prolog de
@@ -305,7 +308,7 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 | Integrante | Principais contribuições |
 |------------|--------------------------|
 | Eduarda Domingos Rodrigues | [...] |
-| Eduardo de Almeida Ferreira | [...] |
+| Eduardo de Almeida Ferreira | Testes plunit do motor de fluxos (`fsm.pl`) com o alvo no `make test-prolog`; configuração do `elm-test` e do `make test-elm`, com testes de `Domain` (ids, eventos, URLs, nó duplicado, ligação para nó inexistente e ciclos) e de `FlowParser` (erros de sintaxe com número da linha) em `frontend/tests/`; módulo `ApiError.elm`, que guarda o `detail` das respostas de erro do FastAPI para a tela mostrá-lo, e `ExecutionOutcome` no lugar do `status` em `String`; remoção da inicialização duplicada do Elm e do Mermaid no `index.html`; atualização da seção de arquitetura e de uso do README. |
 | Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`). |
 | Leonardo Michalski Miranda | [...] |
 | Letícia de Carvalho dos Santos | [...] |
