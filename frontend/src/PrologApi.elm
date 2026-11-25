@@ -7,7 +7,7 @@ import PrologReport exposing (Report)
 
 endpoint : String
 endpoint =
-    "http://localhost:8000/analisar"
+    "http://localhost:8000/analyze"
 
 
 analyze : (Result Http.Error Report -> msg) -> String -> Cmd msg
