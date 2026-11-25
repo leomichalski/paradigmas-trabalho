@@ -12,8 +12,8 @@ O backend repassa cada chamada para o backend/prolog/armazenamento.pl:
 
     GET    /fluxos              -> fluxos_salvos/1
     GET    /fluxos?tipo=post    -> fluxos_com_tipo/2
-    POST   /fluxos              -> salvar_fluxo/2
-    GET    /fluxos/{nome}       -> carregar_fluxo/2
+    POST   /fluxos              -> salvar_fluxo/3
+    GET    /fluxos/{nome}       -> carregar_fluxo/3
     DELETE /fluxos/{nome}       -> remover_fluxo/1
 
 -}
@@ -21,7 +21,7 @@ O backend repassa cada chamada para o backend/prolog/armazenamento.pl:
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Types exposing (FlowFilter(..), Msg(..), NodeType(..))
+import Types exposing (FlowFilter(..), Msg(..), NodeType(..), SavedFlow)
 import Url
 
 
@@ -58,33 +58,46 @@ listFlows filter =
         }
 
 
-{-| Envia: `{ "nome": "...", "diagram_text": "graph TD ..." }`
+{-| Envia: `{ "nome": "...", "diagram_text": "graph TD ...", "trigger_input": "..." }`
 -}
-saveFlow : String -> String -> Cmd Msg
-saveFlow name diagram =
+saveFlow : String -> SavedFlow -> Cmd Msg
+saveFlow name flow =
     Http.post
         { url = baseUrl
         , body =
             Http.jsonBody
                 (Encode.object
                     [ ( "nome", Encode.string name )
-                    , ( "diagram_text", Encode.string diagram )
+                    , ( "diagram_text", Encode.string flow.diagram )
+                    , ( "trigger_input", Encode.string flow.trigger )
                     ]
                 )
         , expect = Http.expectWhatever (GotSaveResult name)
         }
 
 
-{-| Resposta: `{ "nome": "...", "diagram_text": "graph TD ..." }`
+{-| Resposta: `{ "nome": "...", "diagram_text": "graph TD ...", "trigger_input": "..." }`
 -}
 openFlow : String -> Cmd Msg
 openFlow name =
     Http.get
         { url = flowUrl name
         , expect =
-            Http.expectJson (GotOpenResult name)
-                (Decode.field "diagram_text" Decode.string)
+            Http.expectJson (GotOpenResult name) savedFlowDecoder
         }
+
+
+{-| Se o backend não mandar o gatilho, ele vira "" e o campo é limpo.
+-}
+savedFlowDecoder : Decode.Decoder SavedFlow
+savedFlowDecoder =
+    Decode.map2 SavedFlow
+        (Decode.field "diagram_text" Decode.string)
+        (Decode.oneOf
+            [ Decode.field "trigger_input" Decode.string
+            , Decode.succeed ""
+            ]
+        )
 
 
 deleteFlow : String -> Cmd Msg
