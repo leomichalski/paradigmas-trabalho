@@ -22,6 +22,7 @@ init savedApiKey =
     ( { language = Pt
       , workflowText = ""
       , triggerInput = ""
+      , provider = Nvidia
       , apiKey = savedApiKey
       , executionState = Idle
       , mermaidError = Nothing
@@ -42,6 +43,9 @@ update msg model =
         UpdateTriggerInput txt ->
             ( { model | triggerInput = txt }, Cmd.none )
 
+        ChangeProvider provider ->
+            ( { model | provider = provider }, Cmd.none )
+
         UpdateApiKey txt ->
             ( { model | apiKey = txt }, saveApiKey txt )
 
@@ -50,6 +54,7 @@ update msg model =
             , Api.runAgent
                 { diagram = model.workflowText
                 , triggerInput = model.triggerInput
+                , provider = model.provider
                 , apiKey = model.apiKey
                 }
             )

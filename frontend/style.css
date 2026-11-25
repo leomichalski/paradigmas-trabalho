@@ -80,6 +80,7 @@ body {
 }
 
 .field input,
+.field select,
 .field textarea {
   display: block;
   width: 100%;
@@ -99,11 +100,13 @@ body {
 }
 
 .field input:hover,
+.field select:hover,
 .field textarea:hover {
   border-color: var(--muted);
 }
 
 .field input:focus,
+.field select:focus,
 .field textarea:focus {
   border-color: var(--accent);
   outline: none;

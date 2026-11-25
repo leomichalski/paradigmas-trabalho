@@ -27,6 +27,8 @@ class ExecuteRequest(BaseModel):
     api_key: str
     diagram_text: str
     trigger_input: str | None = None
+    # LLM used by PROMPT nodes (see llm_provider/4 in fsm.pl)
+    provider: Literal["openai", "nvidia", "nvidia_ultra"] = "openai"
 
 @app.post("/execute")
 def call_execute_workflow(request: ExecuteRequest):
@@ -38,7 +40,8 @@ def call_execute_workflow(request: ExecuteRequest):
         logs = prolog.execute_workflow(
             api_key=user_api_key,
             diagram_text=user_diagram,
-            trigger_input=user_trigger
+            trigger_input=user_trigger,
+            provider=request.provider
         )
 
         # FastAPI will automatically serialize this dictionary to JSON
@@ -56,4 +59,18 @@ def call_execute_workflow(request: ExecuteRequest):
         raise HTTPException(status_code=502, detail="Failed to connect to the workflow engine.")
     except Exception as e:
         print(f"Unexpected error executing workflow: {e}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+
+class AnalyzeRequest(BaseModel):
+    diagram_text: str
+
+
+@app.post("/analyze")
+def call_analyze_graph(request: AnalyzeRequest):
+    try:
+        return prolog.analyze_graph(diagram_text=request.diagram_text)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")

@@ -1,8 +1,8 @@
 module View exposing (view)
 
-import Html exposing (Html, button, div, h1, h2, input, label, main_, pre, section, span, text, textarea)
-import Html.Attributes exposing (attribute, class, disabled, for, id, placeholder, type_, value)
-import Html.Events exposing (on, onClick, onInput)
+import Html exposing (Html, button, div, h1, h2, input, label, li, main_, ol, option, p, pre, section, select, span, text, textarea)
+import Html.Attributes exposing (attribute, class, disabled, for, id, placeholder, selected, type_, value)
+import Html.Events exposing (on, onClick, onInput, targetValue)
 import Html.Keyed
 import Json.Decode as Decode
 import StorageView exposing (viewStorage)
@@ -76,11 +76,19 @@ viewInputs : Model -> Html Msg
 viewInputs model =
     div [ class "inputs" ]
         [ div [ class "field" ]
+            [ label [ for "llm-provider" ] [ text (translate model.language ProviderLabel) ]
+            , select [ id "llm-provider", onProviderChange ]
+                [ providerOption model.provider Nvidia "NVIDIA NIM (nemotron-3.5-bolt-e4b)"
+                , providerOption model.provider NvidiaUltra "NVIDIA NIM (nemotron-3-ultra-550b, mais lento)"
+                , providerOption model.provider OpenAi "OpenAI (gpt-4o-mini)"
+                ]
+            ]
+        , div [ class "field" ]
             [ label [ for "api-key" ] [ text (translate model.language ApiKeyLabel) ]
             , input
                 [ id "api-key"
                 , type_ "password"
-                , placeholder "sk-..."
+                , placeholder (apiKeyPlaceholder model.provider)
                 , value model.apiKey
                 , onInput UpdateApiKey
                 ]
@@ -113,6 +121,40 @@ viewInputs model =
                 []
             ]
         ]
+
+
+providerOption : LlmProvider -> LlmProvider -> String -> Html Msg
+providerOption current provider caption =
+    option [ value (providerId provider), selected (current == provider) ] [ text caption ]
+
+
+onProviderChange : Html.Attribute Msg
+onProviderChange =
+    on "change"
+        (targetValue
+            |> Decode.andThen
+                (\id ->
+                    case providerFromId id of
+                        Just provider ->
+                            Decode.succeed (ChangeProvider provider)
+
+                        Nothing ->
+                            Decode.fail ("unknown provider: " ++ id)
+                )
+        )
+
+
+apiKeyPlaceholder : LlmProvider -> String
+apiKeyPlaceholder provider =
+    case provider of
+        OpenAi ->
+            "sk-..."
+
+        Nvidia ->
+            "nvapi-..."
+
+        NvidiaUltra ->
+            "nvapi-..."
 
 
 viewButtons : Model -> Html Msg

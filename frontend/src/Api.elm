@@ -4,7 +4,7 @@ import ApiError
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
-import Types exposing (ExecutionOutcome(..), ExecutionResponse, Msg(..))
+import Types exposing (ExecutionOutcome(..), ExecutionResponse, LlmProvider, Msg(..), providerId)
 
 
 endpoint : String
@@ -15,23 +15,24 @@ endpoint =
 {-| Envia o diagrama Mermaid (em texto) para o backend.
 
     POST /execute
-    { "api_key": "...", "diagram_text": "graph TD ..." }
+    { "api_key": "...", "provider": "nvidia", "diagram_text": "graph TD ..." }
 
 -}
-runAgent : { diagram : String, triggerInput : String, apiKey : String } -> Cmd Msg
-runAgent { diagram, triggerInput, apiKey } =
+runAgent : { diagram : String, triggerInput : String, provider : LlmProvider, apiKey : String } -> Cmd Msg
+runAgent { diagram, triggerInput, provider, apiKey } =
     Http.post
         { url = endpoint
-        , body = Http.jsonBody (requestEncoder diagram triggerInput apiKey)
+        , body = Http.jsonBody (requestEncoder diagram triggerInput provider apiKey)
         , expect = ApiError.expectJson GotExecutionResult responseDecoder
         }
 
 
-requestEncoder : String -> String -> String -> Encode.Value
-requestEncoder diagram triggerInput apiKey =
+requestEncoder : String -> String -> LlmProvider -> String -> Encode.Value
+requestEncoder diagram triggerInput provider apiKey =
     let
         baseFields =
             [ ( "api_key", Encode.string apiKey )
+            , ( "provider", Encode.string (providerId provider) )
             , ( "diagram_text", Encode.string diagram )
             ]
 

@@ -21,10 +21,10 @@ frontend:           ## só o frontend: http://localhost:5173
 test: test-prolog test-backend test-elm
 
 # Cada parte acrescenta o próprio arquivo de testes aqui.
-# test_fsm.pl ainda é só um TODO; incluir quando tiver testes.
 test-prolog:        ## testes plunit do Prolog
 	swipl -g run_tests -t halt \
-		backend/prolog/test_armazenamento.pl
+		backend/prolog/test_armazenamento.pl \
+		backend/prolog/test_fsm.pl
 
 test-backend:
 	cd backend && uv run pytest
@@ -34,3 +34,5 @@ test-elm:           ## testes elm-test do frontend (precisa do `elm` no PATH)
 
 validar:            ## confere a forma do RELATORIO.md e das avaliações 360
 	uv run scripts/validar_entrega.py
+
+
