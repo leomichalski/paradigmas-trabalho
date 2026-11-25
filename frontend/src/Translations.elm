@@ -26,7 +26,7 @@ translate lang textId =
         ( Pt, AppTitle ) -> "Editor de Fluxos"  
         ( En, AppTitle ) -> "ProspectFlow MVP"
 
-        ( Pt, ApiKeyLabel ) -> "Chave de API (OpenAI/Gemini)"
+        ( Pt, ApiKeyLabel ) -> "Chave de API (OpenAI)"
         ( En, ApiKeyLabel ) -> "API Key (OpenAI)"
 
         ( Pt, WorkflowLabel ) -> "Definição do Fluxo (Mermaid)"
