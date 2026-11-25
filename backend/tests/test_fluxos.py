@@ -50,7 +50,16 @@ def test_salvar_e_abrir():
     assert salvar("simples", SIMPLES).status_code == 200
     r = client.get("/fluxos/simples")
     assert r.status_code == 200
-    assert r.json() == {"nome": "simples", "diagram_text": SIMPLES}
+    assert r.json() == {"nome": "simples", "diagram_text": SIMPLES, "trigger_input": ""}
+
+
+def test_gatilho_e_salvo_e_volta_ao_abrir():
+    client.post("/fluxos", json={"nome": "com", "diagram_text": SIMPLES,
+                                 "trigger_input": "noticias de hoje"})
+    salvar("sem", SIMPLES)
+    assert client.get("/fluxos/com").json()["trigger_input"] == "noticias de hoje"
+    # o caso que quebrava: abrir um fluxo sem gatilho depois de um com gatilho
+    assert client.get("/fluxos/sem").json()["trigger_input"] == ""
 
 
 def test_listar_em_ordem():

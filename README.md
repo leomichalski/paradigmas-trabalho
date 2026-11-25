@@ -7,8 +7,8 @@ ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado e
 ## Funcionalidades
 
 - **Execução no Backend:** Os fluxos são executados por uma máquina de estados em Prolog, exposta por um endpoint FastAPI (`POST /execute`).
-- **Parser de Mermaid Próprio:** Usa `elm/parser` (sem nenhuma regex) para interpretar definições lineares de fluxo, mapeando-as de forma limpa para tipos de domínio.
-- **Máquina de Estados do Fluxo:** Um motor de execução sequencial que passa a saída de uma etapa para o token `{{input}}` da etapa seguinte.
+- **Parser de Mermaid:** O Elm valida o fluxo com `elm/parser` (`FlowParser.elm`), sem regex, e o Prolog o lê de novo no backend (`fsm.pl`) para executar.
+- **Máquina de Estados do Fluxo:** O `fsm.pl` executa as etapas em sequência, e a saída do `FETCH` vira o token `{{input}}` da etapa seguinte.
 - **Ações HTTP:** Suporta três ações principais:
   - `FETCH`: Busca texto de uma URL especificada via HTTP GET.
   - `PROMPT`: Envia o conteúdo para a API `gpt-4o-mini` da OpenAI.
@@ -67,16 +67,43 @@ ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado e
       send -->|request_failed| abort
    ```
 3. **Entrada de Disparo:** Forneça qualquer dado inicial para disparar o fluxo. Ele substituirá o token `{{input}}` no primeiro nó.
-4. **Salvar e Executar:** Clique em "Save Agent" para interpretar o fluxo e depois em "Run Agent" para iniciar a execução. Acompanhe os logs em Execution Status conforme o fluxo avança etapa por etapa!
+4. **Executar e Salvar:** Clique em "Executar Agente" e acompanhe o log em "Status de Execução". Para guardar o fluxo, dê um nome e clique em "Salvar fluxo"; ele aparece na lista "Fluxos salvos".
 
 ## Arquitetura
 
-- **`src/Types.elm`**: A fonte única da verdade para os modelos de domínio e o `Msg` do Elm.
-- **`src/Main.elm`**: O ponto de entrada, que conecta Model, Update e View.
-- **`src/AppParser.elm`**: Uma implementação estrita com `elm/parser` para ler e validar a estrutura do pipeline.
-- **`src/Engine.elm`**: A máquina de estados que gerencia a geração de comandos HTTP, o tratamento das respostas e a interpolação do token `{{input}}`.
-- **`src/Api.elm`**: Decoders e encoders feitos especificamente para a comunicação estruturada com a OpenAI.
-- **`src/View.elm`**: A interface puramente funcional construída com `elm/html`.
+```
+Elm (navegador) --HTTP/JSON--> FastAPI --pyswip--> Prolog (SWI-Prolog)
+```
+
+O Elm cuida da interface e valida o que dá para validar localmente. O Prolog executa os fluxos e guarda os fluxos salvos. O Python só faz a integração.
+
+### Frontend (`frontend/`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `main.js` | Inicia o app Elm, define o `<mermaid-element>` (pré-visualização do diagrama) e guarda a chave de API no `localStorage` |
+| `src/Main.elm` | Ponto de entrada: `init`, `update` e o port `saveApiKey` |
+| `src/Types.elm` | Modelo, `Msg` e os tipos de estado (`ExecutionState`, `SavedFlows`, `FlowFilter`, `StorageStatus`) |
+| `src/View.elm` | Tela principal: chave de API, fluxo, gatilho, botão de executar e log |
+| `src/StorageView.elm` | Tela de fluxos salvos: salvar, listar, filtrar por tipo de nó, abrir e apagar |
+| `src/Api.elm` | Chamada `POST /execute` |
+| `src/StorageApi.elm` | Chamadas `/fluxos` (salvar, listar, abrir, apagar) |
+| `src/Translations.elm` | Textos em PT e EN, um construtor `TextId` por texto |
+| `src/Domain.elm` | Tipos do domínio (`Flow`, `Node`, `Edge`, ids opacos) e validação: nó duplicado, ligação para nó inexistente e ciclo |
+| `src/FlowParser.elm` | Parser com `elm/parser` que transforma o texto Mermaid em `Flow`, com o número da linha em cada erro |
+| `src/PrologApi.elm`, `src/PrologReport.elm`, `src/ReportView.elm` | Cliente, decoder e tela do relatório de análise feito pelo Prolog. Já escritos, mas ainda não ligados ao `Main` |
+
+### Backend (`backend/`)
+
+| Arquivo | Responsabilidade |
+|---------|------------------|
+| `prolog/fsm.pl` | Lê o diagrama Mermaid e executa o fluxo como máquina de estados (`FETCH`, `PROMPT`, `POST`, `ABORT`, `DONE`) |
+| `prolog/armazenamento.pl` | Fluxos salvos como fatos persistentes (`library(persistency)`) e consultas como `fluxos_com_tipo/2` |
+| `app/main.py` | FastAPI: `POST /execute` e CORS em desenvolvimento |
+| `app/rotas_fluxos.py` | Rotas `/fluxos` |
+| `app/prolog.py`, `app/armazenamento.py` | Ponte Python → Prolog com `pyswip` |
+
+Testes: `backend/prolog/test_armazenamento.pl` (plunit) e `backend/tests/` (pytest).
 
 ## Licença
 

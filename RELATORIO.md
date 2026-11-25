@@ -34,11 +34,13 @@
 
 | Nome completo | Matrícula | Turma (14h/16h) | Usuário GitHub |
 |---------------|-----------|-----------------|----------------|
+| Eduarda Domingos Rodrigues       | [000000]  | 16           | [@usuario]     |
+| Eduardo de Almeida Ferreira       | 221008632  | 16           | @eduardoferre     |
 | Eduardo de Almeida Morais        | 231011275  | 16h           | @Edumorais08     |
-| [Nome]        | [000000]  | [16h]           | [@usuario]     |
-| [Nome]        | [000000]  | [14h]           | [@usuario]     |
-| [Nome]        | [000000]  | [16h]           | [@usuario]     |
-| [Nome]        | [000000]  | [14h]           | [@usuario]     |
+| Leonardo Michalski Miranda       | [000000]  | 16           | [@usuario]     |
+| Letícia de Carvalho dos Santos   | 222022135 | 16           | [@LeticiaSantoss](https://github.com/LeticiaSantosss)|
+| Maria Samara Alves Silva        | 231027005  | 16          | @SamaraAlvess     |
+| Yan Lucas Souza Guimarães       | [000000]  | 16           | [@usuario]     |
 
 - **Nome do projeto:** ProspectFlow
 - **Nome do grupo:** Lambda Squad
@@ -220,12 +222,12 @@ type StorageStatus
 ### 6.2 Conceitos do paradigma funcional utilizados
 
 - [ ] Arquitetura Elm (Model, update, view): [onde]
-- [x] Custom types e `case` exaustivo: `SavedFlows` e `StorageStatus` em `viewList` e `viewStatus` (`frontend/src/StorageView.elm:80`, `:153`); cada texto novo da tela é um construtor de `TextId`, e `translate` não compila se faltar a versão em pt ou en (`frontend/src/Translations.elm`). [outras partes: onde]
+- [x] Custom types e `case` exaustivo: `SavedFlows` e `StorageStatus` em `viewList` e `viewStatus` (`frontend/src/StorageView.elm:80`, `:153`); cada texto novo da tela é um construtor de `TextId`, e `translate` não compila se faltar a versão em pt ou en (`frontend/src/Translations.elm`). Dicionário tipado de traduções (`Language` e `TextId` em `frontend/src/Translations.elm`) e tratamento exaustivo no translate, garantindo em tempo de compilação que todos os textos existam tanto em PT quanto em EN sem strings soltas.
 - [ ] `Maybe` e `Result` no lugar de null e exceções: [onde]
 - [ ] Funções de ordem superior e aplicação parcial: [onde]
 - [x] Composição (`|>`, `>>`): `filterFromString` (`frontend/src/StorageView.elm:121`) com `|>`; `onInput (filterFromString >> ChangeFlowFilter)` no `<select>` do filtro. [outras partes: onde]
 - [x] Decoders e encoders JSON: `savedFlowDecoder`, que usa `Decode.oneOf` para aceitar fluxos sem gatilho (`frontend/src/StorageApi.elm:92`), e o encoder em `saveFlow` (`frontend/src/StorageApi.elm:63`). [outras partes: onde]
-- [ ] Comandos e subscriptions (efeitos controlados): [onde]
+- [x] Comandos e subscriptions (efeitos controlados): Uso de Elm Ports (`port saveApiKey` em `frontend/src/Main.elm`) para delegar a comunicação com o `localStorage` do navegador (efeito colateral impuro) para o JavaScript, preservando a pureza da arquitetura Elm.
 - [ ] Imutabilidade e atualização de records: [onde]
 - [ ] Outro: [...]
 
@@ -262,6 +264,9 @@ type StorageStatus
 
 - [O que foi testado e como.]
 - [Casos de borda considerados.]
+- **Frontend (elm-test):** 75 testes em `frontend/tests/` (`make test-elm`), todos sobre funções puras, sem navegador nem backend. `DomainTest` e `FlowParserTest` cobrem os casos de borda do domínio: texto vazio, nó duplicado, ligação para nó não declarado, ciclo (inclusive auto-laço), losango e ligações duplas que não são ciclo, fim de linha do Windows (`\r\n`) e `PROMPT` com dois-pontos no texto. `ApiErrorTest` cobre os formatos de erro do FastAPI (`detail` em texto, em lista no 422, corpo que não é JSON, corpo vazio).
+- **Prolog (fsm.pl):** [N] testes plunit em `backend/prolog/test_fsm.pl` (`make test-prolog`) para [o que eles cobrem].
+
 - **Armazenamento (parte 2):** 24 testes plunit em
   `backend/prolog/test_armazenamento.pl` (`make test-prolog`) e 14 testes
   pytest das rotas em `backend/tests/test_fluxos.py`, rodando o Prolog de
@@ -274,6 +279,13 @@ type StorageStatus
   fechar e reabrir a base (os fluxos continuam lá); nome com aspas e
   parênteses, como `x"), halt, ("`, que é guardado como texto e não vira
   código Prolog.
+
+
+
+- **Interface Visual e Integração (Parte 6):** Roteiro de testes manuais focados na persistência e reatividade da SPA (Single Page Application).
+- **Casos de borda visuais:** 
+Persistência Segura: Atualizações de página (F5) não perdem a Chave de API, validando o isolamento via Elm Ports e localStorage. Estado Imutável: A alternância do idioma (PT/EN) não interfere no fluxo desenhado nem apaga o grafo visualizado.
+
 
 ## 9. Limitações e problemas conhecidos
 
@@ -295,11 +307,13 @@ type StorageStatus
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
-| Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`) |
-| [Nome]     | [...] |
-| [Nome]     | [...] |
-| [Nome]     | [...] |
-| [Nome]     | [...] |
+| Eduarda Domingos Rodrigues | [...] |
+| Eduardo de Almeida Ferreira | Testes plunit do motor de fluxos (`fsm.pl`) com o alvo no `make test-prolog`; configuração do `elm-test` e do `make test-elm`, com testes de `Domain` (ids, eventos, URLs, nó duplicado, ligação para nó inexistente e ciclos) e de `FlowParser` (erros de sintaxe com número da linha) em `frontend/tests/`; módulo `ApiError.elm`, que guarda o `detail` das respostas de erro do FastAPI para a tela mostrá-lo, e `ExecutionOutcome` no lugar do `status` em `String`; remoção da inicialização duplicada do Elm e do Mermaid no `index.html`; atualização da seção de arquitetura e de uso do README. |
+| Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`). |
+| Leonardo Michalski Miranda | [...] |
+| Letícia de Carvalho dos Santos | [...] |
+| Maria Samara Alves Silva | Interface de usuário e integração frontend em Elm. Implementou a internacionalização (i18n) segura através de Custom Types (Translations.elm); desenvolveu a persistência da Chave de API utilizando Elm Ports e localStorage via JavaScript (main.js e Main.elm); criou o feedback visual reativo para erros do Parser (View.elm). |
+| Yan Lucas Souza Guimarães | [...] |
 
 <!--
   Além desta tabela, que é do grupo, cada integrante entrega uma avaliação
@@ -334,6 +348,8 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 |------------|--------------------|------------------------------------|
 | [Nome ou "nenhuma"] | [...] | [...] |
 | Claude | Gerou o código da parte de armazenamento (Prolog do armazenamento, rotas `/fluxos`, tela "Fluxos salvos" em Elm) e os testes; explicou o código e ajudou a configurar o ambiente, porém tudo foi revisado pelo grupo | Testes automatizados (plunit e pytest), roteiro de teste manual na tela, revisão do código e explicação de cada parte |
+| Gemini / ChatGPT | Auxílio na Parte 6: resolução de erros de build do Vite, elaboração do dicionário de tradução e código para integração do Elm Ports com LocalStorage. | Revisão da compilação e teste manual contínuo no navegador para garantir que a UI e a chave de API mantinham o comportamento desejado. |
+
 
 ## 12. Apresentação oral
 

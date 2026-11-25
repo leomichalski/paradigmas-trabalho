@@ -46,6 +46,13 @@ type NodeType
     | DoneNode
 
 
+{-| Um fluxo salvo: o diagrama e o dado inicial (gatilho), que pode ser "". -}
+type alias SavedFlow =
+    { diagram : String
+    , trigger : String
+    }
+
+
 {-| O que aconteceu com a última ação de salvar, abrir ou apagar. -}
 type StorageStatus
     = NoStorageStatus
@@ -131,5 +138,5 @@ type Msg
     | DeleteFlow String
     | GotFlowList (Result Http.Error (List String))
     | GotSaveResult String (Result Http.Error ())
-    | GotOpenResult String (Result Http.Error String)
+    | GotOpenResult String (Result Http.Error SavedFlow)
     | GotDeleteResult String (Result Http.Error ())
