@@ -33,9 +33,10 @@ parse_mermaid_text(Text, Nodes, Transitions) :-
     parse_lines(Lines, Nodes, Transitions).
 
 % LLM providers for PROMPT nodes: llm_provider(Id, Label, Url, Model).
-% Both expose the OpenAI-compatible chat completions API.
+% All of them expose the OpenAI-compatible chat completions API.
 llm_provider(openai, "OpenAI", 'https://api.openai.com/v1/chat/completions', "gpt-4o-mini").
 llm_provider(nvidia, "NVIDIA NIM", 'https://integrate.api.nvidia.com/v1/chat/completions', "nvidia/nemotron-3.5-bolt-e4b").
+llm_provider(nvidia_ultra, "NVIDIA NIM", 'https://integrate.api.nvidia.com/v1/chat/completions', "nvidia/nemotron-3-ultra-550b-a55b").
 
 % Executor
 execute_workflow_from_text(Text, TriggerInput, ApiKey, LogOut) :-

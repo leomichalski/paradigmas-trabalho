@@ -66,6 +66,7 @@ a model in llm\_provider/4 (fsm.pl).
 type LlmProvider
     = OpenAi
     | Nvidia
+    | NvidiaUltra
 
 
 providerId : LlmProvider -> String
@@ -77,6 +78,9 @@ providerId provider =
         Nvidia ->
             "nvidia"
 
+        NvidiaUltra ->
+            "nvidia_ultra"
+
 
 providerFromId : String -> Maybe LlmProvider
 providerFromId id =
@@ -86,6 +90,9 @@ providerFromId id =
 
         "nvidia" ->
             Just Nvidia
+
+        "nvidia_ultra" ->
+            Just NvidiaUltra
 
         _ ->
             Nothing

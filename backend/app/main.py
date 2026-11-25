@@ -28,7 +28,7 @@ class ExecuteRequest(BaseModel):
     diagram_text: str
     trigger_input: str | None = None
     # LLM used by PROMPT nodes (see llm_provider/4 in fsm.pl)
-    provider: Literal["openai", "nvidia"] = "openai"
+    provider: Literal["openai", "nvidia", "nvidia_ultra"] = "openai"
 
 @app.post("/execute")
 def call_execute_workflow(request: ExecuteRequest):

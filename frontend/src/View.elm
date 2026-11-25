@@ -79,6 +79,7 @@ viewInputs model =
             [ label [ for "llm-provider" ] [ text (translate model.language ProviderLabel) ]
             , select [ id "llm-provider", onProviderChange ]
                 [ providerOption model.provider Nvidia "NVIDIA NIM (nemotron-3.5-bolt-e4b)"
+                , providerOption model.provider NvidiaUltra "NVIDIA NIM (nemotron-3-ultra-550b, mais lento)"
                 , providerOption model.provider OpenAi "OpenAI (gpt-4o-mini)"
                 ]
             ]
@@ -150,6 +151,9 @@ apiKeyPlaceholder provider =
             "sk-..."
 
         Nvidia ->
+            "nvapi-..."
+
+        NvidiaUltra ->
             "nvapi-..."
 
 
