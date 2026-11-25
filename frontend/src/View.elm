@@ -5,6 +5,7 @@ import Html.Attributes exposing (attribute, class, disabled, for, id, placeholde
 import Html.Events exposing (on, onClick, onInput)
 import Html.Keyed
 import Json.Decode as Decode
+import File
 import StorageView exposing (viewStorage)
 import Types exposing (..)
 import Translations exposing (Language(..), TextId(..), translate)
@@ -111,6 +112,13 @@ viewInputs model =
                 , onInput UpdateTriggerInput
                 ]
                 []
+            ]
+        , div [ class "field" ]
+            [ label [] [ text "Vídeo para {{inputVideo}} (MP4, até 25 MB)" ]
+            , button [ type_ "button", class "btn btn--quiet", onClick SelectVideo ] [ text "Selecionar vídeo MP4" ]
+            , case model.videoFile of
+                Just file -> p [] [ text (File.name file) ]
+                Nothing -> p [] [ text "Nenhum vídeo selecionado" ]
             ]
         ]
 

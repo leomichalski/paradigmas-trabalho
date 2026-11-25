@@ -1,6 +1,7 @@
 module Types exposing (..)
 
 import Http
+import File exposing (File)
 import Translations exposing (Language)
 
 
@@ -64,6 +65,7 @@ type alias Model =
     { language : Language
     , workflowText : String
     , triggerInput : String
+    , videoFile : Maybe File
     , apiKey : String
     , executionState : ExecutionState
     , mermaidError : Maybe String
@@ -77,6 +79,8 @@ type alias Model =
 type Msg
     = UpdateWorkflowText String
     | UpdateTriggerInput String
+    | SelectVideo
+    | VideoSelected File
     | UpdateApiKey String
     | RunAgent
     | GotExecutionResult (Result Http.Error ExecutionResponse)

@@ -4,6 +4,7 @@ import Browser
 import Api
 import StorageApi
 import Http
+import File.Select
 import Types exposing (..)
 import View exposing (view)
 import Translations exposing (Language(..), TextId(..))
@@ -22,6 +23,7 @@ init savedApiKey =
     ( { language = Pt
       , workflowText = ""
       , triggerInput = ""
+      , videoFile = Nothing
       , apiKey = savedApiKey
       , executionState = Idle
       , mermaidError = Nothing
@@ -42,6 +44,12 @@ update msg model =
         UpdateTriggerInput txt ->
             ( { model | triggerInput = txt }, Cmd.none )
 
+        SelectVideo ->
+            ( model, File.Select.file [ "video/mp4" ] VideoSelected )
+
+        VideoSelected file ->
+            ( { model | videoFile = Just file }, Cmd.none )
+
         UpdateApiKey txt ->
             ( { model | apiKey = txt }, saveApiKey txt )
 
@@ -51,6 +59,7 @@ update msg model =
                 { diagram = model.workflowText
                 , triggerInput = model.triggerInput
                 , apiKey = model.apiKey
+                , video = model.videoFile
                 }
             )
 

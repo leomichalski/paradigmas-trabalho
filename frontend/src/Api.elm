@@ -2,7 +2,7 @@ module Api exposing (runAgent)
 
 import Http
 import Json.Decode as Decode exposing (Decoder)
-import Json.Encode as Encode
+import File exposing (File)
 import Types exposing (ExecutionResponse, Msg(..))
 
 
@@ -17,30 +17,32 @@ endpoint =
     { "api_key": "...", "diagram_text": "graph TD ..." }
 
 -}
-runAgent : { diagram : String, triggerInput : String, apiKey : String } -> Cmd Msg
-runAgent { diagram, triggerInput, apiKey } =
+runAgent : { diagram : String, triggerInput : String, apiKey : String, video : Maybe File } -> Cmd Msg
+runAgent { diagram, triggerInput, apiKey, video } =
     Http.post
         { url = endpoint
-        , body = Http.jsonBody (requestEncoder diagram triggerInput apiKey)
+        , body = Http.multipartBody (requestParts diagram triggerInput apiKey video)
         , expect = Http.expectJson GotExecutionResult responseDecoder
         }
 
 
-requestEncoder : String -> String -> String -> Encode.Value
-requestEncoder diagram triggerInput apiKey =
+requestParts : String -> String -> String -> Maybe File -> List Http.Part
+requestParts diagram triggerInput apiKey video =
     let
         baseFields =
-            [ ( "api_key", Encode.string apiKey )
-            , ( "diagram_text", Encode.string diagram )
+            [ Http.stringPart "api_key" apiKey
+            , Http.stringPart "diagram_text" diagram
             ]
 
         fields =
             if String.isEmpty triggerInput then
                 baseFields
             else
-                baseFields ++ [ ( "trigger_input", Encode.string triggerInput ) ]
+                baseFields ++ [ Http.stringPart "trigger_input" triggerInput ]
     in
-    Encode.object fields
+    case video of
+        Just file -> fields ++ [ Http.filePart "video" file ]
+        Nothing -> fields
 
 
 {-| Resposta:
