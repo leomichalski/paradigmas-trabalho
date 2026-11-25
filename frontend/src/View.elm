@@ -1,6 +1,6 @@
 module View exposing (view)
 
-import Html exposing (Html, button, div, h1, h2, input, label, li, main_, ol, p, pre, section, span, text, textarea)
+import Html exposing (Html, button, div, h1, h2, input, label, main_, pre, section, span, text, textarea)
 import Html.Attributes exposing (attribute, class, disabled, for, id, placeholder, type_, value)
 import Html.Events exposing (on, onClick, onInput)
 import Html.Keyed

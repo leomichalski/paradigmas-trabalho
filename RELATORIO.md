@@ -34,11 +34,13 @@
 
 | Nome completo | Matrícula | Turma (14h/16h) | Usuário GitHub |
 |---------------|-----------|-----------------|----------------|
+| Eduarda Domingos Rodrigues       | [000000]  | 16           | [@usuario]     |
+| Eduardo de Almeida Ferreira       | [000000]  | 16           | [@usuario]     |
 | Eduardo de Almeida Morais        | 231011275  | 16h           | @Edumorais08     |
-| [Nome]        | [000000]  | [16h]           | [@usuario]     |
-| [Nome]        | [000000]  | [14h]           | [@usuario]     |
-| [Nome]        | [000000]  | [16h]           | [@usuario]     |
-| [Nome]        | [000000]  | [14h]           | [@usuario]     |
+| Leonardo Michalski Miranda       | [000000]  | 16           | [@usuario]     |
+| Letícia de Carvalho dos Santos        | [000000]  | 16           | [@usuario]     |
+| Maria Samara Alves Silva        | 231027005  | 16          | @SamaraAlvess     |
+| Yan Lucas Souza Guimarães       | [000000]  | 16           | [@usuario]     |
 
 - **Nome do projeto:** ProspectFlow
 - **Nome do grupo:** Lambda Squad
@@ -295,11 +297,13 @@ type StorageStatus
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
-| Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`) |
-| [Nome]     | [...] |
-| [Nome]     | [...] |
-| [Nome]     | [...] |
-| [Nome]     | [...] |
+| Eduarda Domingos Rodrigues | [...] |
+| Eduardo de Almeida Ferreira | [...] |
+| Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`). |
+| Leonardo Michalski Miranda | [...] |
+| Letícia de Carvalho dos Santos | [...] |
+| Maria Samara Alves Silva | [...] |
+| Yan Lucas Souza Guimarães | [...] |
 
 <!--
   Além desta tabela, que é do grupo, cada integrante entrega uma avaliação
