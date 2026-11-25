@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Elm + Mermaid</title>
-  <link rel="stylesheet" href="style.css">
+  <title>ProspectFlow</title>
+  <link rel="stylesheet" href="/style.css">
 
   <script>
     try {
@@ -39,58 +39,7 @@
     })();
   </script>
 
- <!-- Carregar o JavaScript pelo Vite para compilar o Elm em tempo real -->
+  <!-- Elm e o custom element do Mermaid são carregados pelo Vite -->
   <script type="module" src="/main.js"></script>
-
-  <!-- 2. Load Mermaid and define the custom element -->
-  <script type="module">
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-    
-    mermaid.initialize({ startOnLoad: false });
-
-    class MermaidElement extends HTMLElement {
-      constructor() {
-        super();
-        // Use Shadow DOM so Mermaid's SVG doesn't overwrite Elm's Virtual DOM
-        this.attachShadow({ mode: 'open' });
-      }
-
-      connectedCallback() {
-        this.renderDiagram();
-        // Watch for Elm updating the text, and re-render when it does!
-        this.observer = new MutationObserver(() => this.renderDiagram());
-        this.observer.observe(this, { characterData: true, childList: true, subtree: true });
-      }
-
-      disconnectedCallback() {
-        if (this.observer) this.observer.disconnect();
-      }
-
-      async renderDiagram() {
-        const text = this.textContent.trim();
-        if (!text) return;
-
-        try {
-          // Generate a unique ID for the diagram
-          const id = 'mermaid-' + Math.random().toString(36).substring(2, 9);
-          const { svg } = await mermaid.render(id, text);
-          
-          // Put the SVG inside the Shadow Root
-          this.shadowRoot.innerHTML = svg;
-          this.dispatchEvent(new CustomEvent('render'));
-        } catch (err) {
-          // Send the error back to Elm
-          this.dispatchEvent(new CustomEvent('error', { detail: { error: err } }));
-        }
-      }
-    }
-
-    customElements.define('mermaid-element', MermaidElement);
-
-    // 3. Start Elm
-    Elm.Main.init({
-      node: document.getElementById('app')
-    });
-  </script>
 </body>
 </html>

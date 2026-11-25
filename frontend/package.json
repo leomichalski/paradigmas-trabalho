@@ -12,6 +12,7 @@
   "license": "ISC",
   "devDependencies": {
     "vite": "^8.3.8",
-    "vite-plugin-elm": "4.0.0-2"
+    "vite-plugin-elm": "4.0.0-2",
+    "elm": "0.19.1-6"
   }
 }
