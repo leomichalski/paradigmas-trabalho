@@ -12,8 +12,8 @@ O backend repassa cada chamada para o backend/prolog/armazenamento.pl:
 
     GET    /fluxos              -> fluxos_salvos/1
     GET    /fluxos?tipo=post    -> fluxos_com_tipo/2
-    POST   /fluxos              -> salvar_fluxo/2
-    GET    /fluxos/{nome}       -> carregar_fluxo/2
+    POST   /fluxos              -> salvar_fluxo/3
+    GET    /fluxos/{nome}       -> carregar_fluxo/3
     DELETE /fluxos/{nome}       -> remover_fluxo/1
 
 -}
