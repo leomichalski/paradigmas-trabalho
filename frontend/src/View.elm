@@ -49,7 +49,7 @@ viewMermaid : String -> Html Msg
 viewMermaid workflowText =
     let
         mermaidText =
-            "graph TD\n" ++ workflowText
+            workflowText
 
         errorDecoder =
             Decode.at [ "detail", "error", "message" ] Decode.string
