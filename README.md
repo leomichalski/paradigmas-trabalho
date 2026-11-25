@@ -69,6 +69,19 @@ ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado e
 3. **Entrada de Disparo:** Forneça qualquer dado inicial para disparar o fluxo. Ele substituirá o token `{{input}}` no primeiro nó.
 4. **Salvar e Executar:** Clique em "Save Agent" para interpretar o fluxo e depois em "Run Agent" para iniciar a execução. Acompanhe os logs em Execution Status conforme o fluxo avança etapa por etapa!
 
+## Testes
+
+```bash
+make test          # Prolog (plunit) + backend (pytest) + frontend (elm-test)
+make test-elm      # só os testes do frontend
+```
+
+Os testes do frontend ficam em `frontend/tests/` e rodam com o [elm-test](https://github.com/rtfeldman/node-test-runner). Precisam do `elm` no PATH (como o `vite`) e de `pnpm install` dentro de `frontend/` para instalar o `elm-test`. Eles cobrem só funções puras, sem navegador nem backend:
+
+- `DomainTest`: validação de ids, eventos e URLs; detecção de nó duplicado, ligação para nó inexistente e ciclo.
+- `FlowParserTest`: texto Mermaid → `Flow`, com o número da linha em cada erro de sintaxe.
+- `ApiTest` e `ApiErrorTest`: decoder da resposta de `/execute` e leitura do `detail` dos erros do backend.
+
 ## Arquitetura
 
 - **`src/Types.elm`**: A fonte única da verdade para os modelos de domínio e o `Msg` do Elm.
