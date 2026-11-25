@@ -4,6 +4,7 @@
 :- use_module(library(http/http_client)).
 :- use_module(library(http/json)).
 :- use_module(library(http/http_json)).
+:- ensure_loaded(graph).
 
 % Parser
 parse_node(Line, Id, Action) :-
@@ -36,12 +37,45 @@ execute_workflow_from_text(Text, TriggerInput, ApiKey, LogOut) :-
     parse_mermaid_text(Text, Nodes, Transitions),
     % Find start state
     Nodes = [node(Start, _) | _],
+    % Fails if the graph has a cycle (graph.pl)
+    niveis_paralelismo(Nodes, Transitions, Levels),
     format(string(Log1), "Starting workflow at state: ~w\n", [Start]),
-    run_state(Start, Nodes, Transitions, _{api_key: ApiKey, input: TriggerInput}, [Log1], LogsReversed),
+    StartEntry = Start-_{api_key: ApiKey, input: TriggerInput},
+    run_levels(Levels, Nodes, Transitions, [StartEntry], [Log1], LogsReversed),
     reverse(LogsReversed, LogsForward),
     atomics_to_string(LogsForward, "", LogOut).
 
-run_state(State, Nodes, Transitions, Context, LogsIn, LogsOut) :-
+% Walks the levels in order. Only activated nodes run: the start node or the
+% target of an edge whose event was fired. Activated nodes of the same level
+% run in parallel; if a node has several parents, the first context wins.
+run_levels([], _, _, _, Logs, Logs).
+run_levels([Level | Rest], Nodes, Transitions, Active, LogsIn, LogsOut) :-
+    findall(Node-Ctx, (member(Node, Level), memberchk(Node-Ctx, Active)), ToRun),
+    concurrent_maplist(run_node(Nodes, Transitions), ToRun, Results),
+    foldl(accumulate, Results, Active-LogsIn, NewActive-LogsMid),
+    run_levels(Rest, Nodes, Transitions, NewActive, LogsMid, LogsOut).
+
+run_node(Nodes, Transitions, Node-Ctx, result(Logs, Next)) :-
+    run_state(Node, Nodes, Ctx, Event, NextCtx, [], NodeLogs),
+    findall(Dst-NextCtx, next_transition(Transitions, Node, Event, Dst), Next),
+    findall(LT,
+            ( member(Dst-_, Next),
+              format(string(LT), "~w --[~w]--> ~w\n\n", [Node, Event, Dst]) ),
+            LTs),
+    reverse(LTs, LTsRev),
+    append(LTsRev, NodeLogs, Logs).
+
+next_transition(Transitions, Node, Event, Dst) :-
+    member(transition(Node, E, Dst), Transitions),
+    atom_string(E, Event).
+
+% Logs are kept newest first, like in the rest of the executor
+accumulate(result(Logs, Next), Active0-LogsIn, Active-LogsOut) :-
+    append(Active0, Next, Active),
+    append(Logs, LogsIn, LogsOut).
+
+% Runs a single node and returns the fired event and the new context
+run_state(State, Nodes, Context, Event, NextContext, LogsIn, LogsMid) :-
     member(node(State, Action), Nodes),
     (   re_matchsub('^FETCH:\\s*(?<url>.*)', Action, SubF, [])
     ->  Url = SubF.url,
@@ -142,14 +176,4 @@ run_state(State, Nodes, Transitions, Context, LogsIn, LogsOut) :-
         Event = "none", NextContext = Context, LogsMid = [L1 | LogsIn]
     ;   format(string(L1), "Unknown action: ~w\n", [Action]),
         Event = "none", NextContext = Context, LogsMid = [L1 | LogsIn]
-    ),
-    (   Event \= "none"
-    ->  (   member(transition(State, EventAtom, NextState), Transitions),
-            atom_string(EventAtom, Event)
-        ->  true
-        ;   member(transition(State, Event, NextState), Transitions)
-        ),
-        format(string(LTrans), "~w --[~w]--> ~w\n\n", [State, Event, NextState]),
-        run_state(NextState, Nodes, Transitions, NextContext, [LTrans | LogsMid], LogsOut)
-    ;   LogsOut = LogsMid
     ).

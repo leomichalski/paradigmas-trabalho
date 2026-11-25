@@ -35,6 +35,11 @@ graph TD
 """,
     trigger_input=None
 ):
+    # A graph with a cycle has no execution levels: reject it before running
+    analysis = analyze_graph(diagram_text)
+    if analysis["has_cycle"]:
+        raise ValueError("Workflow has a cycle: " + " -> ".join(analysis["cycle"]))
+
     # Escape quotes and newlines for Prolog query string
     diagram_escaped = diagram_text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
     safe_trigger = trigger_input if trigger_input is not None else ""

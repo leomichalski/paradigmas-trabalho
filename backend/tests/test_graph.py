@@ -124,3 +124,17 @@ def test_diagrama_vazio():
 def test_sem_diagrama():
     resp = client.post("/analyze", json={})
     assert resp.status_code == 422
+
+
+def test_execute_rejects_cycle():
+    diagram = """graph TD
+        hello["PROMPT: Hello"]
+        send["POST: https://httpbin.org/post"]
+
+        hello -->|summary_generated| send
+        send -->|request_succeeded| hello
+    """
+    resp = client.post("/execute", json={"api_key": "x", "diagram_text": diagram})
+
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Workflow has a cycle: hello -> send -> hello"
