@@ -21,7 +21,7 @@ ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado e
 
 - [Node.js](https://nodejs.org/) (v20+ recomendado)
 - [pnpm](https://pnpm.io/)
-- [Elm](https://guide.elm-lang.org/install/elm.html) (0.19.1+)
+- [Elm](https://guide.elm-lang.org/install/elm.html) (0.19.1+), instalado globalmente (o comando `elm` precisa estar no PATH; veja a nota abaixo)
 - [Docker](https://www.docker.com/) (ou [uv](https://docs.astral.sh/uv/) + [SWI-Prolog](https://www.swi-prolog.org/) para rodar o backend sem Docker)
 
 ### Instalação
@@ -44,6 +44,8 @@ ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado e
    ```
 
 4. Abra o navegador na URL local informada pelo Vite (ex.: `http://localhost:5173`).
+
+> **Nota sobre o compilador Elm:** o `vite-plugin-elm` procura o `elm` primeiro em `node_modules/.bin` (da pasta atual e das pastas acima) e só depois no PATH. Não instale o pacote npm `elm` com pnpm neste repositório: o atalho que o pnpm cria executa `node bin/elm`, mas esse arquivo é substituído pelo binário nativo na instalação, e o Vite falha com `elm make failed: ... SyntaxError: Invalid or unexpected token`. Se aparecer esse erro, apague o `node_modules` que contém o `elm` (inclusive um eventual `node_modules` na raiz do repositório) e use o Elm instalado globalmente (`elm --version` deve funcionar no terminal).
 
 ## Uso
 
