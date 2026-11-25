@@ -5,6 +5,7 @@ import Html.Attributes exposing (attribute, class, disabled, for, id, placeholde
 import Html.Events exposing (on, onClick, onInput)
 import Html.Keyed
 import Json.Decode as Decode
+import StorageView exposing (viewStorage)
 import Types exposing (..)
 import Translations exposing (Language(..), TextId(..), translate)
 
@@ -31,6 +32,7 @@ view model =
         , viewInputs model
         , viewButtons model
         , viewExecutionLog model
+        , viewStorage model
         ]
 
 
