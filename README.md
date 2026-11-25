@@ -13,6 +13,7 @@ ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado e
   - `FETCH`: Busca texto de uma URL especificada via HTTP GET.
   - `PROMPT`: Envia o conteúdo para a API `gpt-4o-mini` da OpenAI.
   - `POST`: Envia a saída da etapa anterior, encapsulada em um JSON, para uma URL de webhook especificada via HTTP POST.
+- **Prompts com vídeo:** O nó `PROMPT` aceita `{{inputVideo}}` junto ao texto. Selecione um MP4 na interface (MIME `video/mp4`, máximo de 25 MB); o backend extrai até oito quadros com FFmpeg e os envia como imagens ao GPT-4o-mini.
 - **Log de Execução:** Mostra em tempo real o estado da execução do pipeline (Ocioso, Executando, Concluído ou Falhou) e a saída de cada etapa.
 
 ## Primeiros Passos
@@ -66,7 +67,7 @@ ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado e
       send -->|request_succeeded| done
       send -->|request_failed| abort
    ```
-3. **Entrada de Disparo:** Forneça qualquer dado inicial para disparar o fluxo. Ele substituirá o token `{{input}}` no primeiro nó.
+3. **Entrada de Disparo:** Forneça qualquer dado inicial para disparar o fluxo. Ele substituirá o token `{{input}}` no primeiro nó. Para analisar vídeo, selecione um MP4 e inclua `{{inputVideo}}` no texto do nó `PROMPT`, por exemplo: `PROMPT: Faça um resumo deste vídeo {{inputVideo}}`.
 4. **Salvar e Executar:** Clique em "Save Agent" para interpretar o fluxo e depois em "Run Agent" para iniciar a execução. Acompanhe os logs em Execution Status conforme o fluxo avança etapa por etapa!
 
 ## Arquitetura
