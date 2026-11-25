@@ -8,16 +8,16 @@
 
 install:            ## instala as dependências do backend e do frontend
 	cd backend && uv sync
-	cd frontend && npm install
+	cd frontend && pnpm install
 
 dev:                ## sobe backend e frontend juntos (Ctrl+C encerra ambos)
 	$(MAKE) -j2 backend frontend
 
 backend:            ## só o backend: http://localhost:8000/docs
-	cd backend && uv run fastapi dev app/main.py
+	cd backend && ENVIRONMENT=dev uv run fastapi dev app/main.py
 
 frontend:           ## só o frontend: http://localhost:5173
-	cd frontend && npm run dev
+	cd frontend && pnpm exec vite
 
 test: test-backend
 #test: test-prolog test-backend

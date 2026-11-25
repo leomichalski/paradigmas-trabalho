@@ -1,0 +1,2 @@
+patchedDependencies:
+  vite-plugin-elm@4.0.0-2: patches/vite-plugin-elm@4.0.0-2.patch
