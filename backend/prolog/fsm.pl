@@ -105,13 +105,13 @@ run_state(State, Nodes, Transitions, Context, LogsIn, LogsOut) :-
                 Answer = Choice.message.content,
 
                 NextContext = Context.put(answer, Answer),
-                Event = "prompt_succeeded",
+                Event = "summary_generated",
                 format(string(L2), "PROMPT succeeded.\nResponse:\n~w\n", [Answer]),
                 append([L2, L1], LogsIn, LogsMid)
             ),
             Error,
             (   format(string(L2), "PROMPT failed: ~w\n", [Error]),
-                Event = "prompt_failed",
+                Event = "generation_failed",
                 NextContext = Context,
                 append([L2, L1], LogsIn, LogsMid)
             )

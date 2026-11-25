@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
-from main import app
+from app.main import app
 
 client = TestClient(app)
 
@@ -26,7 +26,7 @@ EXAMPLE_LOG_OUTPUT = "Starting workflow at state: start\nExecuting FETCH: https:
 # Usamos o patch para interceptar a chamada 'prolog.execute_workflow'
 # ATENÇÃO: Mude 'main.prolog.execute_workflow' para o caminho real de onde
 # a variável 'prolog' está importada no seu arquivo FastAPI.
-@patch("main.prolog.execute_workflow")
+@patch("app.main.prolog.execute_workflow")
 def test_execute_workflow_success(mock_execute):
     # Simula o retorno de sucesso do motor prolog
     mock_execute.return_value = EXAMPLE_LOG_OUTPUT
@@ -60,7 +60,7 @@ def test_execute_rejects_empty_body():
     assert response.status_code == 422
 
 
-@patch("main.prolog.execute_workflow")
+@patch("app.main.prolog.execute_workflow")
 def test_execute_handles_validation_error(mock_execute):
     # Simula o motor do Prolog lançando um ValueError (ex: diagrama inválido)
     mock_execute.side_effect = ValueError("Diagrama com sintaxe incorreta.")
@@ -78,7 +78,7 @@ def test_execute_handles_validation_error(mock_execute):
     assert response.json()["detail"] == "Diagrama com sintaxe incorreta."
 
 
-@patch("main.prolog.execute_workflow")
+@patch("app.main.prolog.execute_workflow")
 def test_execute_handles_unexpected_error(mock_execute):
     # Simula uma exceção genérica no servidor (ex: queda do banco, erro de memória)
     mock_execute.side_effect = Exception("Erro bizarro no sistema")
