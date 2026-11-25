@@ -32,15 +32,23 @@ parse_mermaid_text(Text, Nodes, Transitions) :-
     split_string(Text, "\n", "\r", Lines),
     parse_lines(Lines, Nodes, Transitions).
 
+% LLM providers for PROMPT nodes: llm_provider(Id, Label, Url, Model).
+% Both expose the OpenAI-compatible chat completions API.
+llm_provider(openai, "OpenAI", 'https://api.openai.com/v1/chat/completions', "gpt-4o-mini").
+llm_provider(nvidia, "NVIDIA NIM", 'https://integrate.api.nvidia.com/v1/chat/completions', "nvidia/nemotron-3.5-bolt-e4b").
+
 % Executor
 execute_workflow_from_text(Text, TriggerInput, ApiKey, LogOut) :-
+    execute_workflow_from_text(Text, TriggerInput, ApiKey, openai, LogOut).
+
+execute_workflow_from_text(Text, TriggerInput, ApiKey, Provider, LogOut) :-
     parse_mermaid_text(Text, Nodes, Transitions),
     % Find start state
     Nodes = [node(Start, _) | _],
     % Fails if the graph has a cycle (graph.pl)
     niveis_paralelismo(Nodes, Transitions, Levels),
     format(string(Log1), "Starting workflow at state: ~w\n", [Start]),
-    StartEntry = Start-_{api_key: ApiKey, input: TriggerInput},
+    StartEntry = Start-_{api_key: ApiKey, provider: Provider, input: TriggerInput},
     run_levels(Levels, Nodes, Transitions, [StartEntry], [Log1], LogsReversed),
     reverse(LogsReversed, LogsForward),
     atomics_to_string(LogsForward, "", LogOut).
@@ -114,11 +122,13 @@ run_state(State, Nodes, Context, Event, NextContext, LogsIn, LogsMid) :-
         
         string_length(FinalPrompt, PromptLen),
         ( PromptLen > 150 -> sub_string(FinalPrompt, 0, 150, _, PromptPreview) ; PromptPreview = FinalPrompt ),
-        format(string(L1), "Executing PROMPT with OpenAI GPT-4o-mini...\nPrompt payload preview: ~w...\n", [PromptPreview]),
+        llm_provider(Context.provider, ProviderLabel, ProviderUrl, ModelName),
+        format(string(L1), "Executing PROMPT with ~w (~w)...\nPrompt payload preview: ~w...\n",
+               [ProviderLabel, ModelName, PromptPreview]),
         ApiKey = Context.api_key,
 
         Payload = _{
-            model: "gpt-4o-mini",
+            model: ModelName,
             messages: [
                 _{role: "user", content: FinalPrompt}
             ]
@@ -127,7 +137,7 @@ run_state(State, Nodes, Context, Event, NextContext, LogsIn, LogsMid) :-
         catch(
             (   string_concat("Bearer ", ApiKey, AuthHeader),
                 setup_call_cleanup(
-                    http_open('https://api.openai.com/v1/chat/completions', In, [
+                    http_open(ProviderUrl, In, [
                         post(json(Payload)),
                         request_header('Authorization'=AuthHeader)
                     ]),

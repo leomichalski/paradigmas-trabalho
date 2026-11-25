@@ -60,10 +60,42 @@ type StorageAction
     | FlowDeleted
 
 
+{-| LLM used by PROMPT nodes. The backend maps each one to an endpoint and
+a model in llm\_provider/4 (fsm.pl).
+-}
+type LlmProvider
+    = OpenAi
+    | Nvidia
+
+
+providerId : LlmProvider -> String
+providerId provider =
+    case provider of
+        OpenAi ->
+            "openai"
+
+        Nvidia ->
+            "nvidia"
+
+
+providerFromId : String -> Maybe LlmProvider
+providerFromId id =
+    case id of
+        "openai" ->
+            Just OpenAi
+
+        "nvidia" ->
+            Just Nvidia
+
+        _ ->
+            Nothing
+
+
 type alias Model =
     { language : Language
     , workflowText : String
     , triggerInput : String
+    , provider : LlmProvider
     , apiKey : String
     , executionState : ExecutionState
     , mermaidError : Maybe String
@@ -77,6 +109,7 @@ type alias Model =
 type Msg
     = UpdateWorkflowText String
     | UpdateTriggerInput String
+    | ChangeProvider LlmProvider
     | UpdateApiKey String
     | RunAgent
     | GotExecutionResult (Result Http.Error ExecutionResponse)

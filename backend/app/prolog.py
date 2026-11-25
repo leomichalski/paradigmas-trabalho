@@ -33,7 +33,8 @@ graph TD
     send -->|request_succeeded| done
     send -->|request_failed| abort
 """,
-    trigger_input=None
+    trigger_input=None,
+    provider="openai"
 ):
     # A graph with a cycle has no execution levels: reject it before running
     analysis = analyze_graph(diagram_text)
@@ -44,7 +45,7 @@ graph TD
     diagram_escaped = diagram_text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
     safe_trigger = trigger_input if trigger_input is not None else ""
     trigger_escaped = safe_trigger.replace("\\", "\\\\").replace("'", "\\'")
-    query_str = f"execute_workflow_from_text('{diagram_escaped}', '{trigger_escaped}', '{api_key}', LogOut)"
+    query_str = f"execute_workflow_from_text('{diagram_escaped}', '{trigger_escaped}', '{api_key}', {provider}, LogOut)"
 
     result = list(pyswipProlog.query(query_str))
     if result:

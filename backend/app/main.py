@@ -27,6 +27,8 @@ class ExecuteRequest(BaseModel):
     api_key: str
     diagram_text: str
     trigger_input: str | None = None
+    # LLM used by PROMPT nodes (see llm_provider/4 in fsm.pl)
+    provider: Literal["openai", "nvidia"] = "openai"
 
 @app.post("/execute")
 def call_execute_workflow(request: ExecuteRequest):
@@ -38,7 +40,8 @@ def call_execute_workflow(request: ExecuteRequest):
         logs = prolog.execute_workflow(
             api_key=user_api_key,
             diagram_text=user_diagram,
-            trigger_input=user_trigger
+            trigger_input=user_trigger,
+            provider=request.provider
         )
 
         # FastAPI will automatically serialize this dictionary to JSON
