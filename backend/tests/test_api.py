@@ -94,3 +94,41 @@ def test_execute_handles_unexpected_error(mock_execute):
     # O FastAPI deve capturar com o 'except Exception' e retornar HTTP 500
     assert response.status_code == 500
     assert "Erro bizarro no sistema" in response.json()["detail"]
+
+# Cobertura do suporte a arquivos MP4 no nó PROMPT.
+import io
+
+@patch("app.main._extract_video_frames", return_value=["data:image/jpeg;base64,ZmFrZQ=="])
+@patch("app.main.prolog.execute_workflow", return_value=EXAMPLE_LOG_OUTPUT)
+def test_execute_accepts_mp4(mock_execute, mock_frames):
+    response = client.post("/execute", data={"api_key": "test", "diagram_text": EXAMPLE_DIAGRAM},
+        files={"video": ("sample.mp4", io.BytesIO(b"mp4 bytes"), "video/mp4")})
+    assert response.status_code == 200
+    mock_frames.assert_called_once()
+    assert "data:image/jpeg;base64,ZmFrZQ==" in mock_execute.call_args.kwargs["video_frames"]
+
+
+def test_execute_rejects_non_mp4_upload():
+    response = client.post("/execute", data={"api_key": "test", "diagram_text": EXAMPLE_DIAGRAM},
+        files={"video": ("sample.mov", io.BytesIO(b"not mp4"), "video/quicktime")})
+    assert response.status_code == 200
+    assert response.json()["status"] == "failed"
+    assert "video/mp4" in response.json()["logs"]
+
+
+def test_execute_rejects_video_over_size_limit(monkeypatch):
+    from app import main
+    monkeypatch.setattr(main, "MAX_VIDEO_SIZE", 4)
+    response = client.post("/execute", data={"api_key": "test", "diagram_text": EXAMPLE_DIAGRAM},
+        files={"video": ("sample.mp4", io.BytesIO(b"12345"), "video/mp4")})
+    assert response.status_code == 200
+    assert response.json()["status"] == "failed"
+    assert "25 MB" in response.json()["logs"]
+
+
+@patch("app.main.prolog.execute_workflow", return_value="PROMPT failed: missing_video_file")
+def test_execution_reports_missing_video_as_failed(mock_execute):
+    response = client.post("/execute", json={"api_key": "test",
+        "diagram_text": 'graph TD\\nstart["PROMPT: resumo {{inputVideo}}"]'})
+    assert response.status_code == 200
+    assert response.json()["status"] == "failed"

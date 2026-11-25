@@ -31,13 +31,15 @@ graph TD
     send -->|request_succeeded| done
     send -->|request_failed| abort
 """,
-    trigger_input=None
+    trigger_input=None,
+    video_frames="[]"
 ):
     # Escape quotes and newlines for Prolog query string
     diagram_escaped = diagram_text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
     safe_trigger = trigger_input if trigger_input is not None else ""
     trigger_escaped = safe_trigger.replace("\\", "\\\\").replace("'", "\\'")
-    query_str = f"execute_workflow_from_text('{diagram_escaped}', '{trigger_escaped}', '{api_key}', LogOut)"
+    frames_escaped = video_frames.replace("\\", "\\\\").replace("'", "\\'")
+    query_str = f"execute_workflow_from_text('{diagram_escaped}', '{trigger_escaped}', '{api_key}', '{frames_escaped}', LogOut)"
 
     result = list(pyswipProlog.query(query_str))
     if result:

@@ -32,12 +32,14 @@ parse_mermaid_text(Text, Nodes, Transitions) :-
     parse_lines(Lines, Nodes, Transitions).
 
 % Executor
-execute_workflow_from_text(Text, TriggerInput, ApiKey, LogOut) :-
+execute_workflow_from_text(Text, TriggerInput, ApiKey, FramesJson, LogOut) :-
     parse_mermaid_text(Text, Nodes, Transitions),
+    atom_string(FramesAtom, FramesJson),
+    atom_json_dict(FramesAtom, Frames, []),
     % Find start state
     Nodes = [node(Start, _) | _],
     format(string(Log1), "Starting workflow at state: ~w\n", [Start]),
-    run_state(Start, Nodes, Transitions, _{api_key: ApiKey, input: TriggerInput}, [Log1], LogsReversed),
+    run_state(Start, Nodes, Transitions, _{api_key: ApiKey, input: TriggerInput, video_frames: Frames}, [Log1], LogsReversed),
     reverse(LogsReversed, LogsForward),
     atomics_to_string(LogsForward, "", LogOut).
 
@@ -77,21 +79,32 @@ run_state(State, Nodes, Transitions, Context, LogsIn, LogsOut) :-
             string_concat(TempStr, After, FinalPrompt)
         ;   FinalPrompt = PromptTpl
         ),
+        (   sub_string(FinalPrompt, VideoBefore, _, VideoAfter, "{{inputVideo}}")
+        ->  ( Context.video_frames = [] -> VideoLabel = "[video ausente]" ; VideoLabel = "[quadros do vídeo anexados]" ),
+            sub_string(FinalPrompt, 0, VideoBefore, _, VideoPrefix),
+            sub_string(FinalPrompt, _, VideoAfter, 0, VideoSuffix),
+            string_concat(VideoPrefix, VideoLabel, VideoTemp),
+            string_concat(VideoTemp, VideoSuffix, FinalVideoPrompt)
+        ;   FinalVideoPrompt = FinalPrompt
+        ),
         
-        string_length(FinalPrompt, PromptLen),
-        ( PromptLen > 150 -> sub_string(FinalPrompt, 0, 150, _, PromptPreview) ; PromptPreview = FinalPrompt ),
+        string_length(FinalVideoPrompt, PromptLen),
+        ( PromptLen > 150 -> sub_string(FinalVideoPrompt, 0, 150, _, PromptPreview) ; PromptPreview = FinalVideoPrompt ),
         format(string(L1), "Executing PROMPT with OpenAI GPT-4o-mini...\nPrompt payload preview: ~w...\n", [PromptPreview]),
         ApiKey = Context.api_key,
 
-        Payload = _{
-            model: "gpt-4o-mini",
-            messages: [
-                _{role: "user", content: FinalPrompt}
-            ]
-        },
-
         catch(
-            (   string_concat("Bearer ", ApiKey, AuthHeader),
+            (   ( sub_string(PromptTpl, _, _, _, "{{inputVideo}}"), Context.video_frames = []
+                -> throw(error(missing_video_file, prompt))
+                ; true
+                ),
+                ( Context.video_frames = []
+                -> UserContent = FinalVideoPrompt
+                ; maplist(frame_content, Context.video_frames, ImageParts),
+                  UserContent = [_{type: text, text: FinalVideoPrompt}|ImageParts]
+                ),
+                Payload = _{model: "gpt-4o-mini", messages: [_{role: "user", content: UserContent}]},
+                string_concat("Bearer ", ApiKey, AuthHeader),
                 setup_call_cleanup(
                     http_open('https://api.openai.com/v1/chat/completions', In, [
                         post(json(Payload)),
@@ -153,3 +166,5 @@ run_state(State, Nodes, Transitions, Context, LogsIn, LogsOut) :-
         run_state(NextState, Nodes, Transitions, NextContext, [LTrans | LogsMid], LogsOut)
     ;   LogsOut = LogsMid
     ).
+
+frame_content(FrameUrl, _{type: image_url, image_url: _{url: FrameUrl, detail: low}}).
