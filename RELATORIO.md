@@ -222,12 +222,12 @@ type StorageStatus
 ### 6.2 Conceitos do paradigma funcional utilizados
 
 - [ ] Arquitetura Elm (Model, update, view): [onde]
-- [x] Custom types e `case` exaustivo: `SavedFlows` e `StorageStatus` em `viewList` e `viewStatus` (`frontend/src/StorageView.elm:80`, `:153`); cada texto novo da tela é um construtor de `TextId`, e `translate` não compila se faltar a versão em pt ou en (`frontend/src/Translations.elm`). [outras partes: onde]
+- [x] Custom types e `case` exaustivo: `SavedFlows` e `StorageStatus` em `viewList` e `viewStatus` (`frontend/src/StorageView.elm:80`, `:153`); cada texto novo da tela é um construtor de `TextId`, e `translate` não compila se faltar a versão em pt ou en (`frontend/src/Translations.elm`). Dicionário tipado de traduções (`Language` e `TextId` em `frontend/src/Translations.elm`) e tratamento exaustivo no translate, garantindo em tempo de compilação que todos os textos existam tanto em PT quanto em EN sem strings soltas.
 - [ ] `Maybe` e `Result` no lugar de null e exceções: [onde]
 - [ ] Funções de ordem superior e aplicação parcial: [onde]
 - [x] Composição (`|>`, `>>`): `filterFromString` (`frontend/src/StorageView.elm:121`) com `|>`; `onInput (filterFromString >> ChangeFlowFilter)` no `<select>` do filtro. [outras partes: onde]
 - [x] Decoders e encoders JSON: `savedFlowDecoder`, que usa `Decode.oneOf` para aceitar fluxos sem gatilho (`frontend/src/StorageApi.elm:92`), e o encoder em `saveFlow` (`frontend/src/StorageApi.elm:63`). [outras partes: onde]
-- [ ] Comandos e subscriptions (efeitos controlados): [onde]
+- [x] Comandos e subscriptions (efeitos controlados): Uso de Elm Ports (`port saveApiKey` em `frontend/src/Main.elm`) para delegar a comunicação com o `localStorage` do navegador (efeito colateral impuro) para o JavaScript, preservando a pureza da arquitetura Elm.
 - [ ] Imutabilidade e atualização de records: [onde]
 - [ ] Outro: [...]
 
@@ -277,6 +277,13 @@ type StorageStatus
   parênteses, como `x"), halt, ("`, que é guardado como texto e não vira
   código Prolog.
 
+
+
+- **Interface Visual e Integração (Parte 6):** Roteiro de testes manuais focados na persistência e reatividade da SPA (Single Page Application).
+- **Casos de borda visuais:** 
+Persistência Segura: Atualizações de página (F5) não perdem a Chave de API, validando o isolamento via Elm Ports e localStorage. Estado Imutável: A alternância do idioma (PT/EN) não interfere no fluxo desenhado nem apaga o grafo visualizado.
+
+
 ## 9. Limitações e problemas conhecidos
 
 <!--
@@ -302,7 +309,7 @@ type StorageStatus
 | Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`). |
 | Leonardo Michalski Miranda | [...] |
 | Letícia de Carvalho dos Santos | [...] |
-| Maria Samara Alves Silva | [...] |
+| Maria Samara Alves Silva | Interface de usuário e integração frontend em Elm. Implementou a internacionalização (i18n) segura através de Custom Types (Translations.elm); desenvolveu a persistência da Chave de API utilizando Elm Ports e localStorage via JavaScript (main.js e Main.elm); criou o feedback visual reativo para erros do Parser (View.elm). |
 | Yan Lucas Souza Guimarães | [...] |
 
 <!--
@@ -338,6 +345,8 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 |------------|--------------------|------------------------------------|
 | [Nome ou "nenhuma"] | [...] | [...] |
 | Claude | Gerou o código da parte de armazenamento (Prolog do armazenamento, rotas `/fluxos`, tela "Fluxos salvos" em Elm) e os testes; explicou o código e ajudou a configurar o ambiente, porém tudo foi revisado pelo grupo | Testes automatizados (plunit e pytest), roteiro de teste manual na tela, revisão do código e explicação de cada parte |
+| Gemini / ChatGPT | Auxílio na Parte 6: resolução de erros de build do Vite, elaboração do dicionário de tradução e código para integração do Elm Ports com LocalStorage. | Revisão da compilação e teste manual contínuo no navegador para garantir que a UI e a chave de API mantinham o comportamento desejado. |
+
 
 ## 12. Apresentação oral
 
