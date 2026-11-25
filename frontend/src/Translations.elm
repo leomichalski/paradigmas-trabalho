@@ -6,6 +6,7 @@ type Language
 
 type TextId
     = AppTitle
+    | ProviderLabel
     | ApiKeyLabel
     | WorkflowLabel
     | TriggerLabel
@@ -45,8 +46,11 @@ translate lang textId =
         ( Pt, AppTitle ) -> "Editor de Fluxos"  
         ( En, AppTitle ) -> "ProspectFlow MVP"
 
-        ( Pt, ApiKeyLabel ) -> "Chave de API (OpenAI)"
-        ( En, ApiKeyLabel ) -> "API Key (OpenAI)"
+        ( Pt, ProviderLabel ) -> "Provedor de LLM"
+        ( En, ProviderLabel ) -> "LLM Provider"
+
+        ( Pt, ApiKeyLabel ) -> "Chave de API"
+        ( En, ApiKeyLabel ) -> "API Key"
 
         ( Pt, WorkflowLabel ) -> "Definição do Fluxo (Mermaid)"
         ( En, WorkflowLabel ) -> "Mermaid Workflow Definition"

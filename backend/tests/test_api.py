@@ -94,3 +94,24 @@ def test_execute_handles_unexpected_error(mock_execute):
     # O FastAPI deve capturar com o 'except Exception' e retornar HTTP 500
     assert response.status_code == 500
     assert "Erro bizarro no sistema" in response.json()["detail"]
+
+
+@patch("app.main.prolog.execute_workflow")
+def test_execute_passes_provider(mock_execute):
+    mock_execute.return_value = EXAMPLE_LOG_OUTPUT
+
+    response = client.post(
+        "/execute",
+        json={"api_key": "nvapi-fake", "diagram_text": EXAMPLE_DIAGRAM, "provider": "nvidia"}
+    )
+
+    assert response.status_code == 200
+    assert mock_execute.call_args.kwargs["provider"] == "nvidia"
+
+
+def test_execute_rejects_unknown_provider():
+    response = client.post(
+        "/execute",
+        json={"api_key": "x", "diagram_text": EXAMPLE_DIAGRAM, "provider": "gemini"}
+    )
+    assert response.status_code == 422

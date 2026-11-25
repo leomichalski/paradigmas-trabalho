@@ -42,23 +42,42 @@ type alias Suggestion =
     }
 
 
+{-| Decodes the POST /analyze response (graph.pl). /analyze does not send
+suggestions yet, so they default to an empty list.
+-}
 decoder : Decoder Report
 decoder =
-    Decode.map2 Report
-        (Decode.field "erros" (Decode.list findingDecoder))
-        (Decode.field "sugestoes" (Decode.list suggestionDecoder))
-
-
-findingDecoder : Decoder Finding
-findingDecoder =
-    Decode.map3 Finding
-        (Decode.field "codigo" Decode.string |> Decode.map codeFromString)
-        (Decode.field "mensagem" Decode.string)
+    Decode.map3 toReport
+        (Decode.field "cycle" (Decode.list Decode.string))
+        (Decode.field "unreachable_nodes" (Decode.list Decode.string))
         (Decode.oneOf
-            [ Decode.field "nos" (Decode.list Decode.string)
+            [ Decode.field "sugestoes" (Decode.list suggestionDecoder)
             , Decode.succeed []
             ]
         )
+
+
+toReport : List String -> List String -> List Suggestion -> Report
+toReport cycle unreachable suggestions =
+    Report (cycleFindings cycle ++ unreachableFindings unreachable) suggestions
+
+
+cycleFindings : List String -> List Finding
+cycleFindings cycle =
+    if List.isEmpty cycle then
+        []
+
+    else
+        [ Finding Cycle "o fluxo volta para um nó já visitado" cycle ]
+
+
+unreachableFindings : List String -> List Finding
+unreachableFindings nodes =
+    if List.isEmpty nodes then
+        []
+
+    else
+        [ Finding UnreachableNode "nunca são alcançados a partir do início" nodes ]
 
 
 suggestionDecoder : Decoder Suggestion
@@ -67,19 +86,3 @@ suggestionDecoder =
         (Decode.field "titulo" Decode.string)
         (Decode.field "mensagem" Decode.string)
         (Decode.maybe (Decode.field "diagrama" Decode.string))
-
-
-codeFromString : String -> FindingCode
-codeFromString raw =
-    case raw of
-        "ciclo" ->
-            Cycle
-
-        "no_inalcancavel" ->
-            UnreachableNode
-
-        "ligacao_invalida" ->
-            InvalidLink
-
-        other ->
-            Other other
