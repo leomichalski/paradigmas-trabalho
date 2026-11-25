@@ -97,7 +97,8 @@ update msg model =
 
         SaveFlow ->
             ( { model | storageStatus = StorageBusy }
-            , StorageApi.saveFlow (String.trim model.flowName) model.workflowText
+            , StorageApi.saveFlow (String.trim model.flowName)
+                { diagram = model.workflowText, trigger = model.triggerInput }
             )
 
         OpenFlow name ->
@@ -117,9 +118,10 @@ update msg model =
             , StorageApi.listFlows model.flowFilter
             )
 
-        GotOpenResult name (Ok diagram) ->
+        GotOpenResult name (Ok saved) ->
             ( { model
-                | workflowText = diagram
+                | workflowText = saved.diagram
+                , triggerInput = saved.trigger
                 , flowName = name
                 , mermaidError = Nothing
                 , storageStatus = StorageDone FlowOpened name

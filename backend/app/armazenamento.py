@@ -50,17 +50,20 @@ def usar_base(arquivo: Path | str) -> None:
     _consultar(f"abrir_base({_texto_prolog(str(arquivo))})")
 
 
-def salvar(nome: str, diagrama: str) -> bool:
+def salvar(nome: str, diagrama: str, gatilho: str = "") -> bool:
     """False se o nome for vazio ou o diagrama não tiver nenhum nó."""
     return bool(_consultar(
-        f"salvar_fluxo({_texto_prolog(nome)}, {_texto_prolog(diagrama)})"
+        f"salvar_fluxo({_texto_prolog(nome)}, {_texto_prolog(diagrama)}, "
+        f"{_texto_prolog(gatilho)})"
     ))
 
 
-def carregar(nome: str) -> str | None:
-    """O texto do diagrama, ou None se o fluxo não existe."""
-    r = _consultar(f"carregar_fluxo({_texto_prolog(nome)}, Texto)")
-    return _para_str(r[0]["Texto"]) if r else None
+def carregar(nome: str) -> tuple[str, str] | None:
+    """(diagrama, gatilho), ou None se o fluxo não existe."""
+    r = _consultar(f"carregar_fluxo({_texto_prolog(nome)}, Texto, Gatilho)")
+    if not r:
+        return None
+    return _para_str(r[0]["Texto"]), _para_str(r[0]["Gatilho"])
 
 
 def remover(nome: str) -> None:

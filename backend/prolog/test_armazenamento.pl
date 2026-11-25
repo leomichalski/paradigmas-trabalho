@@ -78,6 +78,28 @@ test(salvar_de_novo_substitui, [setup(reiniciar)]) :-
     carregar_fluxo("simples", T),
     fluxos_com_tipo("prompt", []).
 
+test(gatilho_salvo_junto, [setup(reiniciar)]) :-
+    texto_busca(T),
+    salvar_fluxo("com gatilho", T, "noticias de hoje"),
+    carregar_fluxo("com gatilho", T, "noticias de hoje").
+
+test(sem_gatilho_volta_vazio, [setup(reiniciar)]) :-
+    carregar_fluxo("simples", _, "").
+
+test(salvar_de_novo_troca_o_gatilho, [setup(reiniciar)]) :-
+    texto_busca(T),
+    salvar_fluxo("f", T, "primeiro"),
+    salvar_fluxo("f", T, ""),
+    carregar_fluxo("f", _, "").
+
+test(gatilho_persiste_no_arquivo, [setup(reiniciar)]) :-
+    texto_busca(T),
+    salvar_fluxo("com gatilho", T, "oi"),
+    fechar_base,
+    nb_getval(arquivo_teste, Arquivo),
+    abrir_base(Arquivo),
+    carregar_fluxo("com gatilho", _, "oi").
+
 test(fluxo_inexistente, [setup(reiniciar), fail]) :-
     carregar_fluxo("nao_existe", _).
 

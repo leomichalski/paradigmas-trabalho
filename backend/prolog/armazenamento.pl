@@ -9,7 +9,8 @@
 */
 :- module(armazenamento, [
     abrir_base/1, fechar_base/0,
-    salvar_fluxo/2, carregar_fluxo/2, remover_fluxo/1,
+    salvar_fluxo/2, salvar_fluxo/3, carregar_fluxo/2, carregar_fluxo/3,
+    remover_fluxo/1,
     fluxos_salvos/1, fluxos_com_tipo/2, fluxos_com_evento/2,
     fluxos_com_ligacao/3,
     tipo_da_acao/2
@@ -29,6 +30,7 @@
 
 :- persistent
     fluxo_texto(fluxo:atom, texto:string),
+    fluxo_gatilho(fluxo:atom, gatilho:string),
     fluxo_no(fluxo:atom, id:atom, tipo:atom),
     fluxo_transicao(fluxo:atom, origem:atom, evento:atom, destino:atom).
 
@@ -41,17 +43,23 @@ fechar_base :- db_detach.
    2. Salvar, carregar, remover
    ------------------------------------------------------------------ */
 
-%  salvar_fluxo(+Nome, +Texto): lê o diagrama e grava os fatos.
+%  salvar_fluxo(+Nome, +Texto, +Gatilho): lê o diagrama e grava os fatos,
+%  junto com o dado inicial (gatilho), que pode ser "".
 %  Se já existe um fluxo com esse nome, ele é substituído.
 %  Falha se o nome for vazio ou o texto não tiver nenhum nó.
 salvar_fluxo(Nome, Texto) :-
+    salvar_fluxo(Nome, Texto, "").
+
+salvar_fluxo(Nome, Texto, Gatilho) :-
     nome_valido(Nome, F),
     text_to_string(Texto, TextoS),
+    text_to_string(Gatilho, GatilhoS),
     user:parse_mermaid_text(TextoS, Nos, Transicoes),
     Nos \= [],
     with_mutex(armazenamento,
         ( apagar(F),
           assert_fluxo_texto(F, TextoS),
+          assert_fluxo_gatilho(F, GatilhoS),
           forall(member(node(Id, Acao), Nos),
                  gravar_no(F, Id, Acao)),
           forall(member(transition(O, E, D), Transicoes),
@@ -69,11 +77,19 @@ gravar_transicao(F, O, E, D) :-
     atom_string(DA, D),
     assert_fluxo_transicao(F, OA, EA, DA).
 
-%  carregar_fluxo(+Nome, -Texto): devolve o diagrama para o editor.
-%  Falha se o fluxo não existe.
+%  carregar_fluxo(+Nome, -Texto, -Gatilho): devolve o diagrama e o
+%  gatilho para o editor. Falha se o fluxo não existe.
+%  Fluxos salvos antes de existir o gatilho voltam com Gatilho = "".
 carregar_fluxo(Nome, Texto) :-
+    carregar_fluxo(Nome, Texto, _).
+
+carregar_fluxo(Nome, Texto, Gatilho) :-
     atom_string(F, Nome),
-    fluxo_texto(F, Texto).
+    fluxo_texto(F, Texto),
+    (   fluxo_gatilho(F, G)
+    ->  Gatilho = G
+    ;   Gatilho = ""
+    ).
 
 remover_fluxo(Nome) :-
     atom_string(F, Nome),
@@ -81,6 +97,7 @@ remover_fluxo(Nome) :-
 
 apagar(F) :-
     retractall_fluxo_texto(F, _),
+    retractall_fluxo_gatilho(F, _),
     retractall_fluxo_no(F, _, _),
     retractall_fluxo_transicao(F, _, _, _).
 

@@ -2,8 +2,8 @@
 
     GET    /fluxos              lista os nomes      {"fluxos": [...]}
     GET    /fluxos?tipo=post    só os que usam POST {"fluxos": [...]}
-    POST   /fluxos              salva               {"nome", "diagram_text"}
-    GET    /fluxos/{nome}       abre                {"nome", "diagram_text"}
+    POST   /fluxos              salva               {"nome", "diagram_text", "trigger_input"}
+    GET    /fluxos/{nome}       abre                {"nome", "diagram_text", "trigger_input"}
     DELETE /fluxos/{nome}       apaga
 """
 
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/fluxos", tags=["fluxos"])
 class Fluxo(BaseModel):
     nome: str
     diagram_text: str
+    trigger_input: str = ""
 
 
 @router.get("")
@@ -27,7 +28,7 @@ def listar_fluxos(tipo: str | None = None):
 
 @router.post("")
 def salvar_fluxo(fluxo: Fluxo):
-    if not armazenamento.salvar(fluxo.nome, fluxo.diagram_text):
+    if not armazenamento.salvar(fluxo.nome, fluxo.diagram_text, fluxo.trigger_input):
         raise HTTPException(
             status_code=400,
             detail="O nome não pode ser vazio e o diagrama precisa ter pelo menos um nó.",
@@ -38,10 +39,11 @@ def salvar_fluxo(fluxo: Fluxo):
 # {nome:path} aceita nomes com "/" (o Elm manda %2F)
 @router.get("/{nome:path}")
 def abrir_fluxo(nome: str):
-    texto = armazenamento.carregar(nome)
-    if texto is None:
+    salvo = armazenamento.carregar(nome)
+    if salvo is None:
         raise HTTPException(status_code=404, detail=f"Fluxo não encontrado: {nome}")
-    return {"nome": nome, "diagram_text": texto}
+    texto, gatilho = salvo
+    return {"nome": nome, "diagram_text": texto, "trigger_input": gatilho}
 
 
 @router.delete("/{nome:path}")
