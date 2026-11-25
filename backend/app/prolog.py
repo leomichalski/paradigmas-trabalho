@@ -12,6 +12,8 @@ PROLOG_FILE = Path(__file__).parent.parent / "prolog" / "fsm.pl"
 
 pyswipProlog = Prolog()
 pyswipProlog.consult(str(PROLOG_FILE))
+GRAPH_FILE = Path(__file__).parent.parent / "prolog" / "graph.pl"
+pyswipProlog.consult(str(GRAPH_FILE))
 
 
 def execute_workflow(
@@ -43,3 +45,39 @@ graph TD
         return log_out
     else:
         return "Execution failed."
+
+
+def _para_str(item):
+    if isinstance(item, bytes):
+        return item.decode("utf-8")
+    if isinstance(item, list):
+        return [_para_str(x) for x in item]
+    return str(item)
+
+
+def analyze_graph(diagram_text: str) -> dict:
+    diagram_escaped = diagram_text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
+    query_str = (
+        f"parse_mermaid_text('{diagram_escaped}', Nodes, Transitions), "
+        f"analisar_grafo(Nodes, Transitions, TemCiclo, Ciclo, Inalcancaveis, Niveis, Ordem)"
+    )
+
+    result = list(pyswipProlog.query(query_str))
+    if not result:
+        raise ValueError("Erro ao analisar o diagrama.")
+
+    row = result[0]
+    tem_ciclo = _para_str(row["TemCiclo"]) == "true"
+    ciclo = _para_str(row["Ciclo"])
+    inalcancaveis = _para_str(row["Inalcancaveis"])
+    niveis = _para_str(row["Niveis"])
+    ordem = _para_str(row["Ordem"])
+
+    return {
+        "valid": (not tem_ciclo) and len(inalcancaveis) == 0,
+        "has_cycle": tem_ciclo,
+        "cycle": ciclo,
+        "unreachable_nodes": inalcancaveis,
+        "parallel_levels": niveis,
+        "execution_order": ordem,
+    }

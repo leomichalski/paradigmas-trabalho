@@ -52,3 +52,17 @@ def call_execute_workflow(request: ExecuteRequest):
     except Exception as e:
         print(f"Unexpected error executing workflow: {e}")
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+
+class AnalyzeRequest(BaseModel):
+    diagram_text: str
+
+
+@app.post("/analyze")
+def call_analyze_graph(request: AnalyzeRequest):
+    try:
+        return prolog.analyze_graph(diagram_text=request.diagram_text)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
