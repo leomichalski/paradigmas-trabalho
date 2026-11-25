@@ -1,9 +1,10 @@
-module Api exposing (runAgent)
+module Api exposing (requestEncoder, responseDecoder, runAgent)
 
+import ApiError
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
-import Types exposing (ExecutionResponse, Msg(..))
+import Types exposing (ExecutionOutcome(..), ExecutionResponse, Msg(..))
 
 
 endpoint : String
@@ -22,7 +23,7 @@ runAgent { diagram, triggerInput, apiKey } =
     Http.post
         { url = endpoint
         , body = Http.jsonBody (requestEncoder diagram triggerInput apiKey)
-        , expect = Http.expectJson GotExecutionResult responseDecoder
+        , expect = ApiError.expectJson GotExecutionResult responseDecoder
         }
 
 
@@ -51,9 +52,22 @@ requestEncoder diagram triggerInput apiKey =
 responseDecoder : Decoder ExecutionResponse
 responseDecoder =
     Decode.map3 ExecutionResponse
-        (Decode.field "status" Decode.string)
+        (Decode.field "status" outcomeDecoder)
         (optionalString "message")
         (optionalString "logs")
+
+
+outcomeDecoder : Decoder ExecutionOutcome
+outcomeDecoder =
+    Decode.string
+        |> Decode.map
+            (\raw ->
+                if raw == "success" then
+                    Succeeded
+
+                else
+                    NotSucceeded raw
+            )
 
 
 optionalString : String -> Decoder String

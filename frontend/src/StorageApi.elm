@@ -18,6 +18,7 @@ O backend repassa cada chamada para o backend/prolog/armazenamento.pl:
 
 -}
 
+import ApiError
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -53,7 +54,7 @@ listFlows filter =
     Http.get
         { url = url
         , expect =
-            Http.expectJson GotFlowList
+            ApiError.expectJson GotFlowList
                 (Decode.field "fluxos" (Decode.list Decode.string))
         }
 
@@ -72,7 +73,7 @@ saveFlow name flow =
                     , ( "trigger_input", Encode.string flow.trigger )
                     ]
                 )
-        , expect = Http.expectWhatever (GotSaveResult name)
+        , expect = ApiError.expectWhatever (GotSaveResult name)
         }
 
 
@@ -83,7 +84,7 @@ openFlow name =
     Http.get
         { url = flowUrl name
         , expect =
-            Http.expectJson (GotOpenResult name) savedFlowDecoder
+            ApiError.expectJson (GotOpenResult name) savedFlowDecoder
         }
 
 
@@ -107,7 +108,7 @@ deleteFlow name =
         , headers = []
         , url = flowUrl name
         , body = Http.emptyBody
-        , expect = Http.expectWhatever (GotDeleteResult name)
+        , expect = ApiError.expectWhatever (GotDeleteResult name)
         , timeout = Nothing
         , tracker = Nothing
         }

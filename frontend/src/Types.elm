@@ -1,14 +1,25 @@
 module Types exposing (..)
 
-import Http
+import ApiError exposing (ApiError)
 import Translations exposing (Language)
 
 
 type alias ExecutionResponse =
-    { status : String
+    { outcome : ExecutionOutcome
     , message : String
     , logs : String
     }
+
+
+{-| O campo `status` da resposta de `/execute`, já convertido.
+
+Qualquer valor diferente de `"success"` vira `NotSucceeded` e guarda o texto
+original, para a tela poder mostrá-lo.
+
+-}
+type ExecutionOutcome
+    = Succeeded
+    | NotSucceeded String
 
 
 type ExecutionState
@@ -86,7 +97,7 @@ type Msg
     | UpdateTriggerInput String
     | UpdateApiKey String
     | RunAgent
-    | GotExecutionResult (Result Http.Error ExecutionResponse)
+    | GotExecutionResult (Result ApiError ExecutionResponse)
     | GotMermaidError String
     | GotMermaidSuccess
     | ToggleLanguage
@@ -96,7 +107,7 @@ type Msg
     | SaveFlow
     | OpenFlow String
     | DeleteFlow String
-    | GotFlowList (Result Http.Error (List String))
-    | GotSaveResult String (Result Http.Error ())
-    | GotOpenResult String (Result Http.Error SavedFlow)
-    | GotDeleteResult String (Result Http.Error ())
+    | GotFlowList (Result ApiError (List String))
+    | GotSaveResult String (Result ApiError ())
+    | GotOpenResult String (Result ApiError SavedFlow)
+    | GotDeleteResult String (Result ApiError ())
