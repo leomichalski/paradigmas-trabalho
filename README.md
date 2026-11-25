@@ -32,7 +32,7 @@ ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado e
    ```
    Sem Docker: `cd backend && uv sync && ENVIRONMENT=dev uv run fastapi dev app/main.py` (`ENVIRONMENT=dev` habilita o CORS para o frontend).
 
-2. Em outro terminal, instale as dependências do frontend (o app em Elm fica em `frontend/`, não em `frontend/prospectflow/`). Use pnpm, não npm: ele aplica `frontend/patches/`, que corrige o `vite-plugin-elm` para caminhos de projeto com espaços:
+2. Em outro terminal, instale as dependências do frontend (o app em Elm fica em `frontend/`, não em `frontend/prospectflow/`):
    ```bash
    cd frontend
    pnpm install
