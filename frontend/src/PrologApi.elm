@@ -1,5 +1,6 @@
 module PrologApi exposing (analyze)
 
+import ApiError exposing (ApiError)
 import Http
 import Json.Encode as Encode
 import PrologReport exposing (Report)
@@ -10,10 +11,10 @@ endpoint =
     "http://localhost:8000/analyze"
 
 
-analyze : (Result Http.Error Report -> msg) -> String -> Cmd msg
+analyze : (Result ApiError Report -> msg) -> String -> Cmd msg
 analyze toMsg diagram =
     Http.post
         { url = endpoint
         , body = Http.jsonBody (Encode.object [ ( "diagram_text", Encode.string diagram ) ])
-        , expect = Http.expectJson toMsg PrologReport.decoder
+        , expect = ApiError.expectJson toMsg PrologReport.decoder
         }

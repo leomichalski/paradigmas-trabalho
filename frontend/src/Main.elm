@@ -2,8 +2,8 @@ port module Main exposing (main)
 
 import Browser
 import Api
+import ApiError
 import StorageApi
-import Http
 import Types exposing (..)
 import View exposing (view)
 import Translations exposing (Language(..), TextId(..))
@@ -60,18 +60,19 @@ update msg model =
             )
 
         GotExecutionResult (Ok response) ->
-            if response.status == "success" then
-                ( { model | executionState = Completed { message = response.message, logs = response.logs } }
-                , Cmd.none
-                )
+            case response.outcome of
+                Succeeded ->
+                    ( { model | executionState = Completed { message = response.message, logs = response.logs } }
+                    , Cmd.none
+                    )
 
-            else
-                ( { model | executionState = Failed { error = response.message, logs = response.logs } }
-                , Cmd.none
-                )
+                NotSucceeded status ->
+                    ( { model | executionState = Failed { error = failureText status response.message, logs = response.logs } }
+                    , Cmd.none
+                    )
 
         GotExecutionResult (Err httpErr) ->
-            ( { model | executionState = Failed { error = httpErrorToString httpErr, logs = "" } }
+            ( { model | executionState = Failed { error = ApiError.toString httpErr, logs = "" } }
             , Cmd.none
             )
 
@@ -116,7 +117,7 @@ update msg model =
             ( { model | savedFlows = LoadedFlows names }, Cmd.none )
 
         GotFlowList (Err httpErr) ->
-            ( { model | savedFlows = FlowsFailed (httpErrorToString httpErr) }, Cmd.none )
+            ( { model | savedFlows = FlowsFailed (ApiError.toString httpErr) }, Cmd.none )
 
         GotSaveResult name (Ok ()) ->
             ( { model | storageStatus = StorageDone FlowSaved name }
@@ -140,34 +141,22 @@ update msg model =
             )
 
         GotSaveResult _ (Err httpErr) ->
-            ( { model | storageStatus = StorageFailed (httpErrorToString httpErr) }, Cmd.none )
+            ( { model | storageStatus = StorageFailed (ApiError.toString httpErr) }, Cmd.none )
 
         GotOpenResult _ (Err httpErr) ->
-            ( { model | storageStatus = StorageFailed (httpErrorToString httpErr) }, Cmd.none )
+            ( { model | storageStatus = StorageFailed (ApiError.toString httpErr) }, Cmd.none )
 
         GotDeleteResult _ (Err httpErr) ->
-            ( { model | storageStatus = StorageFailed (httpErrorToString httpErr) }, Cmd.none )
+            ( { model | storageStatus = StorageFailed (ApiError.toString httpErr) }, Cmd.none )
 
-httpErrorToString : Http.Error -> String
-httpErrorToString err =
-    case err of
-        Http.BadUrl url ->
-            "Bad URL: " ++ url
+{-| A mensagem do backend, ou o próprio `status` se ela veio vazia. -}
+failureText : String -> String -> String
+failureText status message =
+    if String.isEmpty (String.trim message) then
+        status
 
-        Http.Timeout ->
-            "Network Timeout"
-
-        Http.NetworkError ->
-            "Network Error"
-
-        Http.BadStatus 401 ->
-            "Unauthorized: Please check your API Key."
-
-        Http.BadStatus status ->
-            "Bad Status: " ++ String.fromInt status
-
-        Http.BadBody bodyErr ->
-            "Bad Body: " ++ bodyErr
+    else
+        message
 
 
 subscriptions : Model -> Sub Msg
