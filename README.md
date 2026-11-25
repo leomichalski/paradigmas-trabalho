@@ -1,51 +1,56 @@
 # ProspectFlow
 
-ProspectFlow is an Elm-based MVP for a text-based LLM Workflow Engine. The application allows users to define a sequential pipeline of data enrichment and LLM prompts using a limited Mermaid.js syntax. It executes the pipeline entirely in the browser using The Elm Architecture (TEA) with no backend, relying on `elm/http` for API chaining.
+ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado em texto. A aplicação permite definir um pipeline sequencial de enriquecimento de dados e prompts de LLM usando uma sintaxe limitada do Mermaid.js. O frontend em Elm (The Elm Architecture) envia o fluxo para um backend FastAPI, onde um motor em Prolog o executa.
 
-![App Demo](assets/demo.gif)
+![Demonstração do App](assets/demo.gif)
 
-## Features
+## Funcionalidades
 
-- **Browser-Native Execution:** Runs entirely in the client with no backend dependencies, using Elm's robust state management.
-- **Custom Mermaid Parser:** Uses `elm/parser` (strictly no regex) to parse linear workflow definitions, cleanly mapping them to domain types.
-- **Workflow State Machine:** A sequential execution engine that passes the output of one step into the `{{input}}` token of the next step.
-- **HTTP Actions:** Supports three primary actions:
-  - `FETCH`: Retrieve text from a specified URL via HTTP GET.
-  - `PROMPT`: Send the payload to OpenAI's `gpt-4o-mini` API.
-  - `POST`: Send the previous step's output wrapped in a JSON payload to a specified webhook URL via HTTP POST.
-- **Execution Log:** Provides real-time visual feedback on the state of the execution pipeline (Idle, Running, Completed, or Failed) and the output at each step.
+- **Execução no Backend:** Os fluxos são executados por uma máquina de estados em Prolog, exposta por um endpoint FastAPI (`POST /execute`).
+- **Parser de Mermaid Próprio:** Usa `elm/parser` (sem nenhuma regex) para interpretar definições lineares de fluxo, mapeando-as de forma limpa para tipos de domínio.
+- **Máquina de Estados do Fluxo:** Um motor de execução sequencial que passa a saída de uma etapa para o token `{{input}}` da etapa seguinte.
+- **Ações HTTP:** Suporta três ações principais:
+  - `FETCH`: Busca texto de uma URL especificada via HTTP GET.
+  - `PROMPT`: Envia o conteúdo para a API `gpt-4o-mini` da OpenAI.
+  - `POST`: Envia a saída da etapa anterior, encapsulada em um JSON, para uma URL de webhook especificada via HTTP POST.
+- **Log de Execução:** Mostra em tempo real o estado da execução do pipeline (Ocioso, Executando, Concluído ou Falhou) e a saída de cada etapa.
 
-## Getting Started
+## Primeiros Passos
 
-### Prerequisites
+### Pré-requisitos
 
-- [Node.js](https://nodejs.org/) (v20+ recommended)
+- [Node.js](https://nodejs.org/) (v20+ recomendado)
 - [pnpm](https://pnpm.io/)
-- [Elm](https://guide.elm-lang.org/install/elm.html) (0.19.1+)
+- [Elm](https://guide.elm-lang.org/install/elm.html) (0.19.1+), instalado globalmente (o comando `elm` precisa estar no PATH; veja a nota abaixo)
+- [Docker](https://www.docker.com/) (ou [uv](https://docs.astral.sh/uv/) + [SWI-Prolog](https://www.swi-prolog.org/) para rodar o backend sem Docker)
 
-### Installation
+### Instalação
 
-1. Clone the repository and navigate to the project directory:
+1. Suba o backend (`http://localhost:8000`) a partir da raiz do repositório:
    ```bash
-   cd prospectflow
+   docker compose up --build
    ```
+   Sem Docker: `cd backend && uv sync && ENVIRONMENT=dev uv run fastapi dev app/main.py` (`ENVIRONMENT=dev` habilita o CORS para o frontend).
 
-2. Install the dependencies:
+2. Em outro terminal, instale as dependências do frontend (o app em Elm fica em `frontend/`, não em `frontend/prospectflow/`):
    ```bash
+   cd frontend
    pnpm install
    ```
 
-3. Start the development server:
+3. Inicie o servidor de desenvolvimento:
    ```bash
    pnpm exec vite
    ```
 
-4. Open your browser and navigate to the local URL provided by Vite (e.g., `http://localhost:5173`).
+4. Abra o navegador na URL local informada pelo Vite (ex.: `http://localhost:5173`).
 
-## Usage
+> **Nota sobre o compilador Elm:** o `vite-plugin-elm` procura o `elm` primeiro em `node_modules/.bin` (da pasta atual e das pastas acima) e só depois no PATH. Não instale o pacote npm `elm` com pnpm neste repositório: o atalho que o pnpm cria executa `node bin/elm`, mas esse arquivo é substituído pelo binário nativo na instalação, e o Vite falha com `elm make failed: ... SyntaxError: Invalid or unexpected token`. Se aparecer esse erro, apague o `node_modules` que contém o `elm` (inclusive um eventual `node_modules` na raiz do repositório) e use o Elm instalado globalmente (`elm --version` deve funcionar no terminal).
 
-1. **Enter API Key:** Provide your OpenAI API Key (starting with `sk-...`).
-2. **Define Workflow:** Enter a linear pipeline using the limited Mermaid syntax. Example:
+## Uso
+
+1. **Informe a API Key:** Forneça sua chave da API da OpenAI (começando com `sk-...`).
+2. **Defina o Fluxo:** Escreva um pipeline linear usando a sintaxe limitada do Mermaid. Exemplo:
    ```mermaid
    graph TD
       start["FETCH: https://jsonplaceholder.typicode.com/posts/1"]
@@ -61,18 +66,18 @@ ProspectFlow is an Elm-based MVP for a text-based LLM Workflow Engine. The appli
       send -->|request_succeeded| done
       send -->|request_failed| abort
    ```
-3. **Trigger Input:** Provide any initial data to trigger the workflow. This will replace the `{{input}}` token in the first node.
-4. **Save & Run:** Click "Save Agent" to parse the workflow, and then "Run Agent" to kick off the execution. Watch the Execution Status logs as it progresses step by step!
+3. **Entrada de Disparo:** Forneça qualquer dado inicial para disparar o fluxo. Ele substituirá o token `{{input}}` no primeiro nó.
+4. **Salvar e Executar:** Clique em "Save Agent" para interpretar o fluxo e depois em "Run Agent" para iniciar a execução. Acompanhe os logs em Execution Status conforme o fluxo avança etapa por etapa!
 
-## Architecture
+## Arquitetura
 
-- **`src/Types.elm`**: The Single Source of Truth for domain models and Elm's `Msg`.
-- **`src/Main.elm`**: The entry point, connecting the Model, Update, and View.
-- **`src/AppParser.elm`**: A strict `elm/parser` implementation to read and validate the pipeline structure.
-- **`src/Engine.elm`**: The state machine managing HTTP command generation, response handling, and `{{input}}` token interpolation.
-- **`src/Api.elm`**: Decoders and encoders designed explicitly for structured communication with OpenAI.
-- **`src/View.elm`**: The purely functional UI shell built with `elm/html`.
+- **`src/Types.elm`**: A fonte única da verdade para os modelos de domínio e o `Msg` do Elm.
+- **`src/Main.elm`**: O ponto de entrada, que conecta Model, Update e View.
+- **`src/AppParser.elm`**: Uma implementação estrita com `elm/parser` para ler e validar a estrutura do pipeline.
+- **`src/Engine.elm`**: A máquina de estados que gerencia a geração de comandos HTTP, o tratamento das respostas e a interpolação do token `{{input}}`.
+- **`src/Api.elm`**: Decoders e encoders feitos especificamente para a comunicação estruturada com a OpenAI.
+- **`src/View.elm`**: A interface puramente funcional construída com `elm/html`.
 
-## License
+## Licença
 
-This project is open-source and available under the standard MIT License.
+Este projeto é open-source e está disponível sob a licença MIT.

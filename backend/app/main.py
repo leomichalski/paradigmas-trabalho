@@ -7,8 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app import prolog
+from app.rotas_fluxos import router as rotas_fluxos
 
 app = FastAPI(title="Editor de Fluxos")
+app.include_router(rotas_fluxos)
 
 # In development mode, allow cross-origin requests from the frontend
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production").lower()
@@ -24,16 +26,19 @@ if ENVIRONMENT in ("dev", "development", "debug"):
 class ExecuteRequest(BaseModel):
     api_key: str
     diagram_text: str
+    trigger_input: str | None = None
 
 @app.post("/execute")
 def call_execute_workflow(request: ExecuteRequest):
     try:
         user_api_key = request.api_key
         user_diagram = request.diagram_text
+        user_trigger = request.trigger_input
 
         logs = prolog.execute_workflow(
             api_key=user_api_key,
-            diagram_text=user_diagram
+            diagram_text=user_diagram,
+            trigger_input=user_trigger
         )
 
         # FastAPI will automatically serialize this dictionary to JSON

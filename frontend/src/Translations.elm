@@ -19,6 +19,25 @@ type TextId
     | ExecutionStatus
     | LanguageToggle
     | MermaidErrorPrefix
+      -- armazenamento de fluxos
+    | SavedFlowsTitle
+    | FlowNameLabel
+    | FlowNamePlaceholder
+    | SaveFlowBtn
+    | UpdateFlowBtn
+    | OpenFlowBtn
+    | DeleteFlowBtn
+    | FilterLabel
+    | FilterAll
+    | FilterUsing
+    | LoadingFlowsText
+    | NoSavedFlows
+    | FlowsLoadError
+    | StorageBusyText
+    | FlowSavedMsg
+    | FlowOpenedMsg
+    | FlowDeletedMsg
+    | StorageErrorPrefix
 
 translate : Language -> TextId -> String
 translate lang textId =
@@ -26,7 +45,7 @@ translate lang textId =
         ( Pt, AppTitle ) -> "Editor de Fluxos"  
         ( En, AppTitle ) -> "ProspectFlow MVP"
 
-        ( Pt, ApiKeyLabel ) -> "Chave de API (OpenAI/Gemini)"
+        ( Pt, ApiKeyLabel ) -> "Chave de API (OpenAI)"
         ( En, ApiKeyLabel ) -> "API Key (OpenAI)"
 
         ( Pt, WorkflowLabel ) -> "Definição do Fluxo (Mermaid)"
@@ -64,3 +83,58 @@ translate lang textId =
 
         ( Pt, MermaidErrorPrefix ) -> "Erro no Mermaid: "
         ( En, MermaidErrorPrefix ) -> "Mermaid Error: "
+
+        -- armazenamento de fluxos
+        ( Pt, SavedFlowsTitle ) -> "Fluxos salvos"
+        ( En, SavedFlowsTitle ) -> "Saved flows"
+
+        ( Pt, FlowNameLabel ) -> "Nome do fluxo"
+        ( En, FlowNameLabel ) -> "Flow name"
+
+        ( Pt, FlowNamePlaceholder ) -> "ex.: resumo de notícias"
+        ( En, FlowNamePlaceholder ) -> "e.g. news summary"
+
+        ( Pt, SaveFlowBtn ) -> "Salvar fluxo"
+        ( En, SaveFlowBtn ) -> "Save flow"
+
+        ( Pt, UpdateFlowBtn ) -> "Atualizar fluxo salvo"
+        ( En, UpdateFlowBtn ) -> "Update saved flow"
+
+        ( Pt, OpenFlowBtn ) -> "Abrir"
+        ( En, OpenFlowBtn ) -> "Open"
+
+        ( Pt, DeleteFlowBtn ) -> "Apagar"
+        ( En, DeleteFlowBtn ) -> "Delete"
+
+        ( Pt, FilterLabel ) -> "Mostrar"
+        ( En, FilterLabel ) -> "Show"
+
+        ( Pt, FilterAll ) -> "Todos os fluxos"
+        ( En, FilterAll ) -> "All flows"
+
+        ( Pt, FilterUsing ) -> "Fluxos que usam "
+        ( En, FilterUsing ) -> "Flows using "
+
+        ( Pt, LoadingFlowsText ) -> "Carregando fluxos..."
+        ( En, LoadingFlowsText ) -> "Loading flows..."
+
+        ( Pt, NoSavedFlows ) -> "Nenhum fluxo encontrado."
+        ( En, NoSavedFlows ) -> "No flows found."
+
+        ( Pt, FlowsLoadError ) -> "Não foi possível carregar os fluxos: "
+        ( En, FlowsLoadError ) -> "Could not load flows: "
+
+        ( Pt, StorageBusyText ) -> "Aguarde..."
+        ( En, StorageBusyText ) -> "Please wait..."
+
+        ( Pt, FlowSavedMsg ) -> "Fluxo salvo: "
+        ( En, FlowSavedMsg ) -> "Flow saved: "
+
+        ( Pt, FlowOpenedMsg ) -> "Fluxo aberto no editor: "
+        ( En, FlowOpenedMsg ) -> "Flow opened in the editor: "
+
+        ( Pt, FlowDeletedMsg ) -> "Fluxo apagado: "
+        ( En, FlowDeletedMsg ) -> "Flow deleted: "
+
+        ( Pt, StorageErrorPrefix ) -> "Erro no armazenamento: "
+        ( En, StorageErrorPrefix ) -> "Storage error: "
