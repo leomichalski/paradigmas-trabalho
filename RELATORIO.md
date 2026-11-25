@@ -35,7 +35,7 @@
 | Nome completo | Matrícula | Turma (14h/16h) | Usuário GitHub |
 |---------------|-----------|-----------------|----------------|
 | Eduarda Domingos Rodrigues       | [000000]  | 16           | [@usuario]     |
-| Eduardo de Almeida Ferreira       | [000000]  | 16           | [@usuario]     |
+| Eduardo de Almeida Ferreira       | 221008632  | 16           | @eduardoferre     |
 | Eduardo de Almeida Morais        | 231011275  | 16h           | @Edumorais08     |
 | Leonardo Michalski Miranda       | [000000]  | 16           | [@usuario]     |
 | Letícia de Carvalho dos Santos        | [000000]  | 16           | [@usuario]     |
