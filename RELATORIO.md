@@ -38,7 +38,7 @@
 | Eduardo de Almeida Ferreira       | 221008632  | 16           | @eduardoferre     |
 | Eduardo de Almeida Morais        | 231011275  | 16h           | @Edumorais08     |
 | Leonardo Michalski Miranda       | [000000]  | 16           | [@usuario]     |
-| Letícia de Carvalho dos Santos   | [222022135] | 16           | [@LeticiaSantosss]     |
+| Letícia de Carvalho dos Santos   | [222022135] | 16           | [@LeticiaSantoss](https://github.com/LeticiaSantosss)|
 | Maria Samara Alves Silva        | 231027005  | 16          | @SamaraAlvess     |
 | Yan Lucas Souza Guimarães       | [000000]  | 16           | [@usuario]     |
 
