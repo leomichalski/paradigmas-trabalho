@@ -157,6 +157,11 @@ make test-elm      # só os testes do frontend
 | `fluxos_com_evento(+Evento, -Nomes)` | `backend/prolog/armazenamento.pl:134` | "Quais fluxos tratam o evento `fetch_failed`?" |
 | `fluxos_com_ligacao(+TipoA, +TipoB, -Nomes)` | `backend/prolog/armazenamento.pl:140` | "Quais fluxos ligam um PROMPT direto a um POST?" Junta três fatos numa só consulta |
 | `tipo_da_acao(+Acao, -Tipo)` | `backend/prolog/armazenamento.pl:112` | `"PROMPT: Oi"` vira `prompt`, `"DONE"` vira `done` |
+| `llm_provider(?Id, ?Rotulo, ?Url, ?Modelo)` | `backend/prolog/fsm.pl:37-39` | Fatos com os provedores de LLM do nó PROMPT: OpenAI (`gpt-4o-mini`), NVIDIA NIM (`nemotron-3.5-bolt-e4b`) e NVIDIA NIM Ultra (`nemotron-3-ultra-550b`). Um provedor novo é só mais um fato |
+| `execute_workflow_from_text(+Texto, +Gatilho, +ApiKey, +Provedor, -Log)` | `backend/prolog/fsm.pl:45` | Lê o diagrama, calcula os níveis com `niveis_paralelismo/3` (falha se o grafo tiver ciclo) e executa o fluxo com o provedor escolhido |
+| `run_levels(+Niveis, +Nos, +Transicoes, +Ativos, +LogsIn, -LogsOut)` | `backend/prolog/fsm.pl:60` | Percorre os níveis em ordem e roda em paralelo só os nós ativados pelo evento do nó pai |
+| `run_state(+No, +Nos, +Ctx, -Evento, -NovoCtx, +LogsIn, -LogsOut)` | `backend/prolog/fsm.pl:86` | Executa um único nó (FETCH, PROMPT ou POST) e devolve o evento disparado e o novo contexto |
+| `next_transition(+Transicoes, +No, +Evento, -Destino)` | `backend/prolog/fsm.pl:77` | Destino de uma aresta cujo evento casa com o disparado; por backtracking, todos eles |
 
 ### 5.2 Conceitos do paradigma lógico utilizados
 
@@ -165,14 +170,14 @@ make test-elm      # só os testes do frontend
   tudo; é preciso explicar bem o que foi usado.
 -->
 
-- [x] Fatos e regras como base de conhecimento: os fluxos salvos viram fatos `fluxo_no/3`, `fluxo_transicao/4`, `fluxo_texto/2` e `fluxo_gatilho/2`, gravados em arquivo com `library(persistency)` (`armazenamento.pl:31`); as consultas são regras sobre eles (`armazenamento.pl:125-145`). [outras partes: onde]
+- [x] Fatos e regras como base de conhecimento: os fluxos salvos viram fatos `fluxo_no/3`, `fluxo_transicao/4`, `fluxo_texto/2` e `fluxo_gatilho/2`, gravados em arquivo com `library(persistency)` (`armazenamento.pl:31`); as consultas são regras sobre eles (`armazenamento.pl:125-145`). Os provedores de LLM são fatos `llm_provider/4` (`fsm.pl:37-39`): o nó PROMPT consulta `llm_provider(Context.provider, ...)` (`fsm.pl:125`) em vez de um `if` por provedor. [outras partes: onde]
 - [ ] Unificação e casamento de padrões: [onde]
-- [ ] Recursão (inclusive sobre listas): [onde]
-- [x] Backtracking e múltiplas soluções: `fluxos_com_ligacao/3` (`armazenamento.pl:140`) percorre por backtracking todas as transições e todos os nós que satisfazem a conjunção, e devolve todos os fluxos que casam. [outras partes: onde]
-- [x] `findall/3`, `bagof/3`, `setof/3` ou similares: `setof/3` com quantificador existencial `^` em `nomes_onde/3` (`armazenamento.pl:152`), que dá a lista de nomes ordenada e sem repetição. [outras partes: onde]
+- [x] Recursão (inclusive sobre listas): `run_levels/6` (`fsm.pl:60-65`) é recursivo sobre a lista de níveis do grafo, com o caso base `run_levels([], ...)` devolvendo os logs acumulados. [outras partes: onde]
+- [x] Backtracking e múltiplas soluções: `fluxos_com_ligacao/3` (`armazenamento.pl:140`) percorre por backtracking todas as transições e todos os nós que satisfazem a conjunção, e devolve todos os fluxos que casam. `next_transition/4` (`fsm.pl:77`) tem uma solução por aresta que sai do nó com o evento disparado; assim um nó pode ativar vários filhos ao mesmo tempo. [outras partes: onde]
+- [x] `findall/3`, `bagof/3`, `setof/3` ou similares: `setof/3` com quantificador existencial `^` em `nomes_onde/3` (`armazenamento.pl:152`), que dá a lista de nomes ordenada e sem repetição. `findall/3` em `run_levels/6` seleciona os nós do nível que foram ativados (`fsm.pl:62`) e em `run_node/4` junta todos os destinos do evento (`fsm.pl:69`). [outras partes: onde]
 - [ ] Corte (`!`) ou negação (`\+`), e por que foram necessários: [onde]
 - [ ] Programação por restrições (CLP(FD) ou outra): [onde]
-- [x] Predicados de ordem superior (`maplist`, `foldl`, `include`...): `forall/2` para gravar cada nó e transição (`armazenamento.pl:63-66`); `maplist/3` com lambda da `library(yall)` para converter os nomes (`armazenamento.pl:154`); `nomes_onde/3` recebe o próprio objetivo da consulta como argumento. [outras partes: onde]
+- [x] Predicados de ordem superior (`maplist`, `foldl`, `include`...): `forall/2` para gravar cada nó e transição (`armazenamento.pl:63-66`); `maplist/3` com lambda da `library(yall)` para converter os nomes (`armazenamento.pl:154`); `nomes_onde/3` recebe o próprio objetivo da consulta como argumento. `concurrent_maplist/3` executa em paralelo os nós ativos de um mesmo nível, e `foldl/4` junta os resultados em novos nós ativos e logs (`fsm.pl:63-64`). [outras partes: onde]
 - [ ] Outro: [...]
 
 ### 5.3 Trecho em destaque
@@ -237,14 +242,38 @@ type StorageStatus
 - `StorageDone` guarda qual ação terminou (`FlowSaved`, `FlowOpened`,
   `FlowDeleted`) e o nome do fluxo, para a mensagem de confirmação certa.
 
+**Provedor de LLM (`frontend/src/Types.elm:83-117`).**
+
+```elm
+type LlmProvider
+    = OpenAi
+    | Nvidia
+    | NvidiaUltra
+
+providerFromId : String -> Maybe LlmProvider
+```
+
+- `LlmProvider` em vez de `String`: o `Model` só guarda um provedor que
+  existe. A string que vai para o backend sai de um único lugar
+  (`providerId`, `Types.elm:92`), e o Python (`Literal` em
+  `backend/app/main.py:31`) e o Prolog (`llm_provider/4`) aceitam os mesmos três
+  valores.
+- `providerFromId` devolve `Maybe`, porque o valor do `<select>` é uma string
+  qualquer. O decoder `onProviderChange` (`frontend/src/View.elm:130`) usa
+  `Decode.andThen` e `Decode.fail` para descartar um id desconhecido, então um
+  provedor inválido nunca vira `Msg`.
+- O `case` em `apiKeyPlaceholder` (`View.elm:146`) é exaustivo: ao adicionar
+  `NvidiaUltra`, o compilador aponta todo lugar que ainda não trata o novo
+  construtor.
+
 ### 6.2 Conceitos do paradigma funcional utilizados
 
 - [ ] Arquitetura Elm (Model, update, view): [onde]
 - [x] Custom types e `case` exaustivo: `SavedFlows` e `StorageStatus` em `viewList` e `viewStatus` (`frontend/src/StorageView.elm:80`, `:153`); cada texto novo da tela é um construtor de `TextId`, e `translate` não compila se faltar a versão em pt ou en (`frontend/src/Translations.elm`). Dicionário tipado de traduções (`Language` e `TextId` em `frontend/src/Translations.elm`) e tratamento exaustivo no translate, garantindo em tempo de compilação que todos os textos existam tanto em PT quanto em EN sem strings soltas.
-- [ ] `Maybe` e `Result` no lugar de null e exceções: [onde]
+- [x] `Maybe` e `Result` no lugar de null e exceções: `providerFromId : String -> Maybe LlmProvider` (`frontend/src/Types.elm:105`) para o valor vindo do `<select>`. [outras partes: onde]
 - [ ] Funções de ordem superior e aplicação parcial: [onde]
 - [x] Composição (`|>`, `>>`): `filterFromString` (`frontend/src/StorageView.elm:121`) com `|>`; `onInput (filterFromString >> ChangeFlowFilter)` no `<select>` do filtro. [outras partes: onde]
-- [x] Decoders e encoders JSON: `savedFlowDecoder`, que usa `Decode.oneOf` para aceitar fluxos sem gatilho (`frontend/src/StorageApi.elm:92`), e o encoder em `saveFlow` (`frontend/src/StorageApi.elm:63`). [outras partes: onde]
+- [x] Decoders e encoders JSON: `savedFlowDecoder`, que usa `Decode.oneOf` para aceitar fluxos sem gatilho (`frontend/src/StorageApi.elm:92`), e o encoder em `saveFlow` (`frontend/src/StorageApi.elm:63`). Decoder da resposta de `POST /analyze` com `Decode.map3`, que transforma `cycle` e `unreachable_nodes` em achados do relatório (`frontend/src/PrologReport.elm:50`); `onProviderChange` com `Decode.andThen`/`Decode.fail` (`frontend/src/View.elm:130`); campo `provider` no encoder do `/execute` (`frontend/src/Api.elm:30`). [outras partes: onde]
 - [x] Comandos e subscriptions (efeitos controlados): Uso de Elm Ports (`port saveApiKey` em `frontend/src/Main.elm`) para delegar a comunicação com o `localStorage` do navegador (efeito colateral impuro) para o JavaScript, preservando a pureza da arquitetura Elm.
 - [ ] Imutabilidade e atualização de records: [onde]
 - [ ] Outro: [...]
@@ -268,6 +297,7 @@ type StorageStatus
 | Rota / chamada | Entrada | Saída | Predicado Prolog |
 |----------------|---------|-------|------------------|
 | [`POST /api/...`] | [...] | [...] | [`...`] |
+| `POST /execute` | `{"api_key", "diagram_text", "trigger_input", "provider"}`; `provider` é `openai`, `nvidia` ou `nvidia_ultra` (padrão `openai`) | `{"status", "message", "logs"}`; 400 se o grafo tiver ciclo ou nó inalcançável; 422 se o provedor for desconhecido | `execute_workflow_from_text/5` |
 | `GET /fluxos` | `?tipo=post` (opcional) | `{"fluxos": ["a", "b"]}` | `fluxos_salvos/1` ou `fluxos_com_tipo/2` |
 | `POST /fluxos` | `{"nome", "diagram_text", "trigger_input"}` | `{"nome"}`; 400 se o nome for vazio ou o diagrama não tiver nós | `salvar_fluxo/3` |
 | `GET /fluxos/{nome}` | — | `{"nome", "diagram_text", "trigger_input"}`; 404 se não existir | `carregar_fluxo/3` |
@@ -284,7 +314,17 @@ type StorageStatus
 - [Casos de borda considerados.]
 - **Frontend (elm-test):** 75 testes em `frontend/tests/` (`make test-elm`), todos sobre funções puras, sem navegador nem backend. `DomainTest` e `FlowParserTest` cobrem os casos de borda do domínio: texto vazio, nó duplicado, ligação para nó não declarado, ciclo (inclusive auto-laço), losango e ligações duplas que não são ciclo, fim de linha do Windows (`\r\n`) e `PROMPT` com dois-pontos no texto. `ApiErrorTest` cobre os formatos de erro do FastAPI (`detail` em texto, em lista no 422, corpo que não é JSON, corpo vazio).
 - **Prolog (fsm.pl):** [N] testes plunit em `backend/prolog/test_fsm.pl` (`make test-prolog`) para [o que eles cobrem].
-
+- **Execução e provedores de LLM:** testes pytest (`make test-backend`):
+  `test_execute_rejects_cycle` (`backend/tests/test_graph.py:129`) roda o
+  Prolog de verdade e confere que um fluxo com ciclo é recusado com 400 e o
+  ciclo na mensagem (`hello -> send -> hello`) antes de executar qualquer nó;
+  `test_execute_passes_provider` e `test_execute_rejects_unknown_provider`
+  (`backend/tests/test_api.py:100`, `:112`) conferem que o provedor chega ao
+  Prolog e que um provedor fora da lista (`gemini`) é recusado com 422.
+- **Roteiro manual:** executar o fluxo de exemplo do README com cada um dos três
+  provedores e conferir no log a linha `Executing PROMPT with <provedor>
+  (<modelo>)`; executar um fluxo com ciclo e conferir a mensagem de erro com o
+  ciclo na tela.
 - **Armazenamento (parte 2):** 24 testes plunit em
   `backend/prolog/test_armazenamento.pl` (`make test-prolog`) e 14 testes
   pytest das rotas em `backend/tests/test_fluxos.py`, rodando o Prolog de
@@ -314,6 +354,13 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 
 - [Limitação ou bug conhecido, e em que situação acontece.]
 - [O que o grupo faria com mais tempo.]
+- Na execução em paralelo, se um nó tem dois pais ativados, vale o contexto
+  (`{{input}}`) do primeiro; as saídas dos dois pais não são combinadas
+  (`fsm.pl:57-59`).
+- Fluxos com ciclo não são executados: `/execute` os recusa com 400, então
+  laços de repetição (ex.: tentar de novo um FETCH que falhou) não são possíveis.
+- O modelo NVIDIA NIM Ultra (550B) é bem mais lento que os outros; o nó PROMPT
+  não tem tempo limite configurável.
 
 
 ## 10. Contribuição de cada integrante
@@ -331,7 +378,7 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 | Leonardo Michalski Miranda | Setup e documentação iniciais do projeto; criação da primeira versão do projeto que executava um fluxo sequencial com nós FETCH, PROMPT ou POST; uso de IA para documentação do projeto e para parsing de diagramas Mermaid; refatoração do motor de execução para utilização de Prolog em vez de somente Elm; revisões e ajustes para garantir a integração do sistema. |
 | Letícia de Carvalho dos Santos | [...] |
 | Maria Samara Alves Silva | Interface de usuário e integração frontend em Elm. Implementou a internacionalização (i18n) segura através de Custom Types (`Translations.elm`); desenvolveu a persistência da Chave de API utilizando `Elm Ports` e `localStorage` via JavaScript (`main.js` e `Main.elm`); criou o feedback visual reativo para erros do Parser (`View.elm`). |
-| Yan Lucas Souza Guimarães | [...] |
+| Yan Lucas Souza Guimarães | Execução do fluxo em paralelo por níveis do grafo em Prolog (`run_levels/6`, `run_state/7` em `fsm.pl`, com `concurrent_maplist/3`) e recusa de fluxos com ciclo no `/execute`, com teste pytest; escolha do provedor de LLM para os nós PROMPT (OpenAI, NVIDIA NIM e NVIDIA NIM Ultra 550B): fatos `llm_provider/4` no Prolog, campo `provider` no `/execute` com testes, e o custom type `LlmProvider` com o seletor na tela em Elm (`Types.elm`, `View.elm`, `Api.elm`); correção do frontend para chamar `/analyze` e decodificar sua resposta (`PrologApi.elm`, `PrologReport.elm`); correções para o app rodar de ponta a ponta (inicialização duplicada do Elm, eventos do PROMPT, imports dos testes, Makefile com pnpm e CORS); tradução do README para português e instruções de execução |
 
 <!--
   Além desta tabela, que é do grupo, cada integrante entrega uma avaliação
@@ -367,7 +414,7 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 | [Nome ou "nenhuma"] | [...] | [...] |
 | Claude | Gerou o código da parte de armazenamento (Prolog do armazenamento, rotas `/fluxos`, tela "Fluxos salvos" em Elm) e os testes; explicou o código e ajudou a configurar o ambiente, porém tudo foi revisado pelo grupo | Testes automatizados (plunit e pytest), roteiro de teste manual na tela, revisão do código e explicação de cada parte |
 | Gemini / ChatGPT | Auxílio na Parte 6: resolução de erros de build do Vite, elaboração do dicionário de tradução e código para integração do Elm Ports com LocalStorage. Atividades realizadas com auxilo da inteligência artificial e revisadas pelo grupo. | Revisão da compilação e teste manual contínuo no navegador para garantir que a UI e a chave de API mantinham o comportamento desejado. |
-
+| Claude (Claude Code) | Parte do Yan: gerou o código e os testes da execução em paralelo por níveis, da escolha do provedor de LLM e da correção do `/analyze` no frontend, e ajudou a diagnosticar os problemas de ambiente (Elm via pnpm, CORS); os commits estão marcados com `Co-Authored-By: Claude` | Testes pytest, `elm make` compilando, execução manual dos fluxos com os três provedores e revisão de cada alteração |
 
 ## 12. Apresentação oral
 
