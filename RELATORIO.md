@@ -60,7 +60,7 @@
     Escolha UMA faixa. Ela define o ajuste de escopo da nota do grupo
     (AVALIACAO.md, seção 1.5). O professor confirma a faixa na apresentação.
   -->
-- **Slides da apresentação oral:** [`docs/apresentacao.pdf` | link externo | não há]
+- **Slides da apresentação oral:** https://docs.google.com/presentation/d/1DPOFrzh4NuB9V1EEUNQG9a80Z1trTprwma9aimZj_W4/edit?usp=sharing
   <!--
     No final do semestre, cada grupo faz uma apresentação oral de 15
     minutos. Slides são opcionais; se o grupo usar, coloque o arquivo no
@@ -438,16 +438,16 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
   Preencha esta seção antes da apresentação.
 -->
 
-- **Slides:** [mesmo caminho indicado na seção 1, ou "não há"]
+- **Slides:** https://docs.google.com/presentation/d/1DPOFrzh4NuB9V1EEUNQG9a80Z1trTprwma9aimZj_W4/edit?usp=sharing
 - **Roteiro:**
 
 | Parte | Duração | Quem apresenta |
 |-------|:-------:|----------------|
-| [Contexto e objetivo] | [2 min] | [Nome] |
-| [Demonstração] | [5 min] | [Nome] |
-| [Código Prolog] | [3 min] | [Nome] |
-| [Código Elm] | [3 min] | [Nome] |
-| [Limitações e aprendizados] | [2 min] | [Nome] |
+| [Contexto e objetivo] | [2 min] | @yanzin00 |
+| [Demonstração] | [5 min] | @leomichalski e @eduardar0 |
+| [Código Prolog] | [3 min] | @LeticiaSantoss e @Edumorais08 |
+| [Código Elm] | [3 min] | @SamaraAlvess |
+| [Limitações e aprendizados] | [2 min] | @eduardoferre |
 
 ## 13. Reflexão sobre os paradigmas
 
