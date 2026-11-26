@@ -34,13 +34,13 @@
 
 | Nome completo | Matrícula | Turma (14h/16h) | Usuário GitHub |
 |---------------|-----------|-----------------|----------------|
-| Eduarda Domingos Rodrigues       | 231026699  | 16h           | [@usuario]     |
-| Eduardo de Almeida Ferreira       | 221008632  | 16h           | @eduardoferre     |
-| Eduardo de Almeida Morais        | 231011275  | 16h           | @Edumorais08     |
-| Leonardo Michalski Miranda       | 190046945  | 16h           | [@usuario]     |
+| Eduarda Domingos Rodrigues       | 231026699  | 16h           | [@eduardar0](https://github.com/eduardar0)     |
+| Eduardo de Almeida Ferreira       | 221008632  | 16h           | [@eduardoferre](https://github.com/eduardoferre)     |
+| Eduardo de Almeida Morais        | 231011275  | 16h           | [@Edumorais08](https://github.com/Edumorais08)     |
+| Leonardo Michalski Miranda       | 190046945  | 16h           | [@leomichalski](https://github.com/leomichalski)     |
 | Letícia de Carvalho dos Santos   | 222022135 | 16h           | [@LeticiaSantoss](https://github.com/LeticiaSantosss)|
-| Maria Samara Alves Silva        | 231027005  | 16h          | @SamaraAlvess     |
-| Yan Lucas Souza Guimarães       | 222006220   | 16h           | [@usuario]     |
+| Maria Samara Alves Silva        | 231027005  | 16h          | [@SamaraAlvess](https://github.com/SamaraAlvess)     |
+| Yan Lucas Souza Guimarães       | 222006220   | 16h           | [@yanzin00](https://github.com/yanzin00)     |
 
 - **Nome do projeto:** ProspectFlow
 - **Nome do grupo:** Lambda Squad
