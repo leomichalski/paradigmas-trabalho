@@ -8,6 +8,8 @@ module PrologReport exposing
     )
 
 import Json.Decode as Decode exposing (Decoder)
+
+
 type AnalysisState
     = AnalysisIdle
     | Analyzing

@@ -44,7 +44,7 @@ viewSaveForm model =
         saveDisabled =
             String.isEmpty name
                 || String.isEmpty (String.trim model.workflowText)
-                || model.storageStatus == StorageBusy
+                || (model.storageStatus == StorageBusy)
 
         buttonText =
             if alreadySaved then

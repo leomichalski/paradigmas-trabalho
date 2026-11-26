@@ -1,8 +1,10 @@
 module Translations exposing (Language(..), TextId(..), translate)
 
+
 type Language
     = Pt
     | En
+
 
 type TextId
     = AppTitle
@@ -40,105 +42,205 @@ type TextId
     | FlowDeletedMsg
     | StorageErrorPrefix
 
+
 translate : Language -> TextId -> String
 translate lang textId =
     case ( lang, textId ) of
-        ( Pt, AppTitle ) -> "Editor de Fluxos"  
-        ( En, AppTitle ) -> "ProspectFlow MVP"
+        ( Pt, AppTitle ) ->
+            "Editor de Fluxos"
 
-        ( Pt, ProviderLabel ) -> "Provedor de LLM"
-        ( En, ProviderLabel ) -> "LLM Provider"
+        ( En, AppTitle ) ->
+            "ProspectFlow MVP"
 
-        ( Pt, ApiKeyLabel ) -> "Chave de API"
-        ( En, ApiKeyLabel ) -> "API Key"
+        ( Pt, ProviderLabel ) ->
+            "Provedor de LLM"
 
-        ( Pt, WorkflowLabel ) -> "Definição do Fluxo (Mermaid)"
-        ( En, WorkflowLabel ) -> "Mermaid Workflow Definition"
+        ( En, ProviderLabel ) ->
+            "LLM Provider"
 
-        ( Pt, TriggerLabel ) -> "Dado Inicial (Gatilho)"
-        ( En, TriggerLabel ) -> "Trigger Input"
+        ( Pt, ApiKeyLabel ) ->
+            "Chave de API"
 
-        ( Pt, TriggerPlaceholder ) -> "Dado inicial ou texto de gatilho..."
-        ( En, TriggerPlaceholder ) -> "Initial data or trigger text..."
+        ( En, ApiKeyLabel ) ->
+            "API Key"
 
-        ( Pt, RunAgentBtn ) -> "Executar Agente"
-        ( En, RunAgentBtn ) -> "Run Agent"
+        ( Pt, WorkflowLabel ) ->
+            "Definição do Fluxo (Mermaid)"
 
-        ( Pt, ApiKeyRequiredNote ) -> "Chave de API necessária para nós do tipo PROMPT."
-        ( En, ApiKeyRequiredNote ) -> "API Key required for PROMPT nodes."
+        ( En, WorkflowLabel ) ->
+            "Mermaid Workflow Definition"
 
-        ( Pt, StatusIdle ) -> "Ocioso"
-        ( En, StatusIdle ) -> "Idle"
+        ( Pt, TriggerLabel ) ->
+            "Dado Inicial (Gatilho)"
 
-        ( Pt, StatusRunning ) -> "Executando..."
-        ( En, StatusRunning ) -> "Running..."
+        ( En, TriggerLabel ) ->
+            "Trigger Input"
 
-        ( Pt, StatusCompleted ) -> "Concluído!"
-        ( En, StatusCompleted ) -> "Completed!"
+        ( Pt, TriggerPlaceholder ) ->
+            "Dado inicial ou texto de gatilho..."
 
-        ( Pt, StatusFailed ) -> "Falhou: "
-        ( En, StatusFailed ) -> "Failed: "
+        ( En, TriggerPlaceholder ) ->
+            "Initial data or trigger text..."
 
-        ( Pt, ExecutionStatus ) -> "Status de Execução: "
-        ( En, ExecutionStatus ) -> "Execution Status: "
+        ( Pt, RunAgentBtn ) ->
+            "Executar Agente"
 
-        ( Pt, LanguageToggle ) -> "Change to English"
-        ( En, LanguageToggle ) -> "Mudar para Português"
+        ( En, RunAgentBtn ) ->
+            "Run Agent"
 
-        ( Pt, MermaidErrorPrefix ) -> "Erro no Mermaid: "
-        ( En, MermaidErrorPrefix ) -> "Mermaid Error: "
+        ( Pt, ApiKeyRequiredNote ) ->
+            "Chave de API necessária para nós do tipo PROMPT."
+
+        ( En, ApiKeyRequiredNote ) ->
+            "API Key required for PROMPT nodes."
+
+        ( Pt, StatusIdle ) ->
+            "Ocioso"
+
+        ( En, StatusIdle ) ->
+            "Idle"
+
+        ( Pt, StatusRunning ) ->
+            "Executando..."
+
+        ( En, StatusRunning ) ->
+            "Running..."
+
+        ( Pt, StatusCompleted ) ->
+            "Concluído!"
+
+        ( En, StatusCompleted ) ->
+            "Completed!"
+
+        ( Pt, StatusFailed ) ->
+            "Falhou: "
+
+        ( En, StatusFailed ) ->
+            "Failed: "
+
+        ( Pt, ExecutionStatus ) ->
+            "Status de Execução: "
+
+        ( En, ExecutionStatus ) ->
+            "Execution Status: "
+
+        ( Pt, LanguageToggle ) ->
+            "Change to English"
+
+        ( En, LanguageToggle ) ->
+            "Mudar para Português"
+
+        ( Pt, MermaidErrorPrefix ) ->
+            "Erro no Mermaid: "
+
+        ( En, MermaidErrorPrefix ) ->
+            "Mermaid Error: "
 
         -- armazenamento de fluxos
-        ( Pt, SavedFlowsTitle ) -> "Fluxos salvos"
-        ( En, SavedFlowsTitle ) -> "Saved flows"
+        ( Pt, SavedFlowsTitle ) ->
+            "Fluxos salvos"
 
-        ( Pt, FlowNameLabel ) -> "Nome do fluxo"
-        ( En, FlowNameLabel ) -> "Flow name"
+        ( En, SavedFlowsTitle ) ->
+            "Saved flows"
 
-        ( Pt, FlowNamePlaceholder ) -> "ex.: resumo de notícias"
-        ( En, FlowNamePlaceholder ) -> "e.g. news summary"
+        ( Pt, FlowNameLabel ) ->
+            "Nome do fluxo"
 
-        ( Pt, SaveFlowBtn ) -> "Salvar fluxo"
-        ( En, SaveFlowBtn ) -> "Save flow"
+        ( En, FlowNameLabel ) ->
+            "Flow name"
 
-        ( Pt, UpdateFlowBtn ) -> "Atualizar fluxo salvo"
-        ( En, UpdateFlowBtn ) -> "Update saved flow"
+        ( Pt, FlowNamePlaceholder ) ->
+            "ex.: resumo de notícias"
 
-        ( Pt, OpenFlowBtn ) -> "Abrir"
-        ( En, OpenFlowBtn ) -> "Open"
+        ( En, FlowNamePlaceholder ) ->
+            "e.g. news summary"
 
-        ( Pt, DeleteFlowBtn ) -> "Apagar"
-        ( En, DeleteFlowBtn ) -> "Delete"
+        ( Pt, SaveFlowBtn ) ->
+            "Salvar fluxo"
 
-        ( Pt, FilterLabel ) -> "Mostrar"
-        ( En, FilterLabel ) -> "Show"
+        ( En, SaveFlowBtn ) ->
+            "Save flow"
 
-        ( Pt, FilterAll ) -> "Todos os fluxos"
-        ( En, FilterAll ) -> "All flows"
+        ( Pt, UpdateFlowBtn ) ->
+            "Atualizar fluxo salvo"
 
-        ( Pt, FilterUsing ) -> "Fluxos que usam "
-        ( En, FilterUsing ) -> "Flows using "
+        ( En, UpdateFlowBtn ) ->
+            "Update saved flow"
 
-        ( Pt, LoadingFlowsText ) -> "Carregando fluxos..."
-        ( En, LoadingFlowsText ) -> "Loading flows..."
+        ( Pt, OpenFlowBtn ) ->
+            "Abrir"
 
-        ( Pt, NoSavedFlows ) -> "Nenhum fluxo encontrado."
-        ( En, NoSavedFlows ) -> "No flows found."
+        ( En, OpenFlowBtn ) ->
+            "Open"
 
-        ( Pt, FlowsLoadError ) -> "Não foi possível carregar os fluxos: "
-        ( En, FlowsLoadError ) -> "Could not load flows: "
+        ( Pt, DeleteFlowBtn ) ->
+            "Apagar"
 
-        ( Pt, StorageBusyText ) -> "Aguarde..."
-        ( En, StorageBusyText ) -> "Please wait..."
+        ( En, DeleteFlowBtn ) ->
+            "Delete"
 
-        ( Pt, FlowSavedMsg ) -> "Fluxo salvo: "
-        ( En, FlowSavedMsg ) -> "Flow saved: "
+        ( Pt, FilterLabel ) ->
+            "Mostrar"
 
-        ( Pt, FlowOpenedMsg ) -> "Fluxo aberto no editor: "
-        ( En, FlowOpenedMsg ) -> "Flow opened in the editor: "
+        ( En, FilterLabel ) ->
+            "Show"
 
-        ( Pt, FlowDeletedMsg ) -> "Fluxo apagado: "
-        ( En, FlowDeletedMsg ) -> "Flow deleted: "
+        ( Pt, FilterAll ) ->
+            "Todos os fluxos"
 
-        ( Pt, StorageErrorPrefix ) -> "Erro no armazenamento: "
-        ( En, StorageErrorPrefix ) -> "Storage error: "
+        ( En, FilterAll ) ->
+            "All flows"
+
+        ( Pt, FilterUsing ) ->
+            "Fluxos que usam "
+
+        ( En, FilterUsing ) ->
+            "Flows using "
+
+        ( Pt, LoadingFlowsText ) ->
+            "Carregando fluxos..."
+
+        ( En, LoadingFlowsText ) ->
+            "Loading flows..."
+
+        ( Pt, NoSavedFlows ) ->
+            "Nenhum fluxo encontrado."
+
+        ( En, NoSavedFlows ) ->
+            "No flows found."
+
+        ( Pt, FlowsLoadError ) ->
+            "Não foi possível carregar os fluxos: "
+
+        ( En, FlowsLoadError ) ->
+            "Could not load flows: "
+
+        ( Pt, StorageBusyText ) ->
+            "Aguarde..."
+
+        ( En, StorageBusyText ) ->
+            "Please wait..."
+
+        ( Pt, FlowSavedMsg ) ->
+            "Fluxo salvo: "
+
+        ( En, FlowSavedMsg ) ->
+            "Flow saved: "
+
+        ( Pt, FlowOpenedMsg ) ->
+            "Fluxo aberto no editor: "
+
+        ( En, FlowOpenedMsg ) ->
+            "Flow opened in the editor: "
+
+        ( Pt, FlowDeletedMsg ) ->
+            "Fluxo apagado: "
+
+        ( En, FlowDeletedMsg ) ->
+            "Flow deleted: "
+
+        ( Pt, StorageErrorPrefix ) ->
+            "Erro no armazenamento: "
+
+        ( En, StorageErrorPrefix ) ->
+            "Storage error: "

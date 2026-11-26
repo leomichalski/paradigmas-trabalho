@@ -22,6 +22,7 @@ module Domain exposing
 import Dict exposing (Dict)
 import Set exposing (Set)
 
+
 type NodeId
     = NodeId String
 
@@ -95,6 +96,7 @@ hasHostAfter scheme text =
 urlToString : Url -> String
 urlToString (Url raw) =
     raw
+
 
 type NodeKind
     = Fetch Url
@@ -197,6 +199,7 @@ unknownNodeErrors nodeList edgeList =
                     |> List.filter isUnknown
                     |> List.map (\missing -> EdgeToUnknownNode { edge = edge, missing = missing })
             )
+
 
 cycleMembers : List Node -> List Edge -> List NodeId
 cycleMembers nodeList edgeList =

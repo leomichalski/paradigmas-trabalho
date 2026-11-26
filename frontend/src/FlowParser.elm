@@ -34,6 +34,8 @@ toFlow text =
                     (List.filterMap edgeOf items)
                     |> Result.mapError Invalid
             )
+
+
 type Item
     = ItemNode Node
     | ItemEdge Edge
@@ -139,6 +141,8 @@ parseLine raw =
 
             Err _ ->
                 Err "linha inválida: use  id[\"AÇÃO\"]  ou  origem -->|evento| destino"
+
+
 kindFromAction : String -> Result String NodeKind
 kindFromAction action =
     let
@@ -181,6 +185,8 @@ splitAction text =
 
         [] ->
             Nothing
+
+
 type Declaration
     = NodeDecl String String
     | EdgeDecl String String String

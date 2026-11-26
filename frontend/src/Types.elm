@@ -57,14 +57,16 @@ type NodeType
     | DoneNode
 
 
-{-| Um fluxo salvo: o diagrama e o dado inicial (gatilho), que pode ser "". -}
+{-| Um fluxo salvo: o diagrama e o dado inicial (gatilho), que pode ser "".
+-}
 type alias SavedFlow =
     { diagram : String
     , trigger : String
     }
 
 
-{-| O que aconteceu com a última ação de salvar, abrir ou apagar. -}
+{-| O que aconteceu com a última ação de salvar, abrir ou apagar.
+-}
 type StorageStatus
     = NoStorageStatus
     | StorageBusy

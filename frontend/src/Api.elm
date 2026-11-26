@@ -39,6 +39,7 @@ requestEncoder diagram triggerInput provider apiKey =
         fields =
             if String.isEmpty triggerInput then
                 baseFields
+
             else
                 baseFields ++ [ ( "trigger_input", Encode.string triggerInput ) ]
     in

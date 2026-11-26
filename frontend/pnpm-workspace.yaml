@@ -1,0 +1,6 @@
+# O pnpm bloqueia por padrão os scripts de instalação dos pacotes. Os pacotes
+# `elm` e `elm-format` precisam do script para baixar o binário de verdade;
+# sem ele, o Vite falha com "SyntaxError: Invalid or unexpected token".
+allowBuilds:
+  elm: true
+  elm-format: true

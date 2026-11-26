@@ -19,7 +19,7 @@ ProspectFlow é um editor de fluxos (workflows) de LLM baseado em texto. A aplic
 
 - [Node.js](https://nodejs.org/) (v20+ recomendado)
 - [pnpm](https://pnpm.io/)
-- [Elm](https://guide.elm-lang.org/install/elm.html) (0.19.1+), instalado globalmente (o comando `elm` precisa estar no PATH; veja a nota abaixo)
+- O compilador do Elm (0.19.1) e o `elm-format` vêm pelo `pnpm install`, dentro de `frontend/node_modules`. Não precisa instalar o Elm globalmente.
 - [Docker](https://www.docker.com/) (ou [uv](https://docs.astral.sh/uv/) + [SWI-Prolog](https://www.swi-prolog.org/) para rodar o backend sem Docker)
 
 ### Instalação
@@ -43,7 +43,7 @@ ProspectFlow é um editor de fluxos (workflows) de LLM baseado em texto. A aplic
 
 4. Abra o navegador na URL local informada pelo Vite (ex.: `http://localhost:5173`).
 
-> **Nota sobre o compilador Elm:** o `vite-plugin-elm` procura o `elm` primeiro em `node_modules/.bin` (da pasta atual e das pastas acima) e só depois no PATH. Não instale o pacote npm `elm` com pnpm neste repositório: o atalho que o pnpm cria executa `node bin/elm`, mas esse arquivo é substituído pelo binário nativo na instalação, e o Vite falha com `elm make failed: ... SyntaxError: Invalid or unexpected token`. Se aparecer esse erro, apague o `node_modules` que contém o `elm` (inclusive um eventual `node_modules` na raiz do repositório) e use o Elm instalado globalmente (`elm --version` deve funcionar no terminal).
+> **Nota sobre o compilador Elm:** os pacotes `elm` e `elm-format` baixam o binário de verdade durante a instalação. O pnpm bloqueia esse passo por padrão, por isso o `frontend/pnpm-workspace.yaml` libera os dois em `allowBuilds`. Se o Vite falhar com `elm make failed: ... SyntaxError: Invalid or unexpected token`, o binário não foi baixado: apague o `frontend/node_modules` e rode `pnpm install` de novo.
 
 ## Uso
 
@@ -74,7 +74,7 @@ make test          # Prolog (plunit) + backend (pytest) + frontend (elm-test)
 make test-elm      # só os testes do frontend
 ```
 
-Os testes do frontend ficam em `frontend/tests/` e rodam com o [elm-test](https://github.com/rtfeldman/node-test-runner). Precisam do `elm` no PATH (como o `vite`) e de `pnpm install` dentro de `frontend/` para instalar o `elm-test`. Eles cobrem só funções puras, sem navegador nem backend:
+Os testes do frontend ficam em `frontend/tests/` e rodam com o [elm-test](https://github.com/rtfeldman/node-test-runner). Basta rodar `pnpm install` dentro de `frontend/`, que instala o `elm`, o `elm-format` e o `elm-test`. Eles cobrem só funções puras, sem navegador nem backend:
 
 - `DomainTest`: validação de ids, eventos e URLs; detecção de nó duplicado, ligação para nó inexistente e ciclo.
 - `FlowParserTest`: texto Mermaid → `Flow`, com o número da linha em cada erro de sintaxe.
