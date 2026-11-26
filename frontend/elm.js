@@ -5465,8 +5465,8 @@ var $author$project$View$viewInputs = function (model) {
 
 									start -->|fetch_succeeded| summarize
 									start -->|fetch_failed| abort
-									summarize -->|summary_generated| send
-									summarize -->|generation_failed| abort
+									summarize -->|prompt_succeeded| send
+									summarize -->|prompt_failed| abort
 									send -->|request_succeeded| done
 									send -->|request_failed| abort
 								`),

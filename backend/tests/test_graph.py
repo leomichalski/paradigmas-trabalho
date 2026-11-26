@@ -13,7 +13,7 @@ def test_sequencial():
         done["DONE"]
 
         start -->|fetch_succeeded| summarize
-        summarize -->|summary_generated| send
+        summarize -->|prompt_succeeded| send
         send -->|request_succeeded| done
     """
     resp = client.post("/analyze", json={"diagram_text": diagrama})
@@ -131,7 +131,7 @@ def test_execute_rejects_cycle():
         hello["PROMPT: Hello"]
         send["POST: https://httpbin.org/post"]
 
-        hello -->|summary_generated| send
+        hello -->|prompt_succeeded| send
         send -->|request_succeeded| hello
     """
     resp = client.post("/execute", json={"api_key": "x", "diagram_text": diagram})
