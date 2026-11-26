@@ -159,10 +159,13 @@ test(log_registra_a_acao_executada) :-
     contem(Log, "Executing FETCH: http://127.0.0.1:1/").
 
 %  Sem transição para o evento ocorrido, o motor não tem para onde ir:
-%  o predicado falha (o backend converte isso em "Execution failed.").
-test(sem_transicao_para_o_evento_a_execucao_falha, [fail]) :-
+%  desde a execução por níveis (run_levels), o fluxo para naquele nó.
+%  A execução termina, mas não chega a DONE nem a ABORT.
+test(sem_transicao_para_o_evento_o_fluxo_para) :-
     fluxo_sem_transicao_de_falha(T),
-    executar(T, _).
+    executar(T, Log),
+    contem(Log, "FETCH failed"),
+    \+ contem(Log, "Workflow finished").
 
 test(diagrama_sem_nos_falha, [fail]) :-
     executar("graph TD\n", _).
