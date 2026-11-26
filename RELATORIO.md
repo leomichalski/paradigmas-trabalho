@@ -348,7 +348,7 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 |------------|--------------------|------------------------------------|
 | [Nome ou "nenhuma"] | [...] | [...] |
 | Claude | Gerou o código da parte de armazenamento (Prolog do armazenamento, rotas `/fluxos`, tela "Fluxos salvos" em Elm) e os testes; explicou o código e ajudou a configurar o ambiente, porém tudo foi revisado pelo grupo | Testes automatizados (plunit e pytest), roteiro de teste manual na tela, revisão do código e explicação de cada parte |
-| Gemini / ChatGPT | Auxílio na Parte 6: resolução de erros de build do Vite, elaboração do dicionário de tradução e código para integração do Elm Ports com LocalStorage. | Revisão da compilação e teste manual contínuo no navegador para garantir que a UI e a chave de API mantinham o comportamento desejado. |
+| Gemini / ChatGPT | Auxílio na Parte 6: resolução de erros de build do Vite, elaboração do dicionário de tradução e código para integração do Elm Ports com LocalStorage. Atividades realizadas com auxilo da inteligência artificial e revisadas pelo grupo. | Revisão da compilação e teste manual contínuo no navegador para garantir que a UI e a chave de API mantinham o comportamento desejado. |
 
 
 ## 12. Apresentação oral
