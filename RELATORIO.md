@@ -312,7 +312,7 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 | Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`). |
 | Leonardo Michalski Miranda | [...] |
 | Letícia de Carvalho dos Santos | [...] |
-| Maria Samara Alves Silva | Interface de usuário e integração frontend em Elm. Implementou a internacionalização (i18n) segura através de Custom Types (Translations.elm); desenvolveu a persistência da Chave de API utilizando Elm Ports e localStorage via JavaScript (main.js e Main.elm); criou o feedback visual reativo para erros do Parser (View.elm). |
+| Maria Samara Alves Silva | Interface de usuário e integração frontend em Elm. Implementou a internacionalização (i18n) segura através de Custom Types (`Translations.elm`); desenvolveu a persistência da Chave de API utilizando `Elm Ports` e `localStorage` via JavaScript (`main.js` e `Main.elm`); criou o feedback visual reativo para erros do Parser (`View.elm`). |
 | Yan Lucas Souza Guimarães | [...] |
 
 <!--
