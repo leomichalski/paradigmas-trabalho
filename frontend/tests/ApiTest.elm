@@ -5,7 +5,7 @@ import Expect exposing (Expectation)
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Test exposing (Test, describe, test)
-import Types exposing (ExecutionOutcome(..))
+import Types exposing (ExecutionOutcome(..), LlmProvider(..))
 
 
 expectErr : Result e a -> Expectation
@@ -67,16 +67,20 @@ requestTests =
             \_ ->
                 let
                     body =
-                        Api.requestEncoder "graph TD" "dado" "sk-123"
+                        Api.requestEncoder "graph TD" "dado" OpenAi "sk-123"
                 in
                 ( field "api_key" body, field "diagram_text" body )
                     |> Expect.equal ( Ok (Just "sk-123"), Ok (Just "graph TD") )
         , test "envia trigger_input quando preenchido" <|
             \_ ->
-                field "trigger_input" (Api.requestEncoder "d" "dado" "k")
+                field "trigger_input" (Api.requestEncoder "d" "dado" OpenAi "k")
                     |> Expect.equal (Ok (Just "dado"))
         , test "omite trigger_input quando vazio" <|
             \_ ->
-                field "trigger_input" (Api.requestEncoder "d" "" "k")
+                field "trigger_input" (Api.requestEncoder "d" "" OpenAi "k")
                     |> Expect.equal (Ok Nothing)
+        , test "envia o provedor escolhido" <|
+            \_ ->
+                field "provider" (Api.requestEncoder "d" "" Nvidia "k")
+                    |> Expect.equal (Ok (Just "nvidia"))
         ]
