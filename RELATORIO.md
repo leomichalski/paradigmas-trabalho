@@ -134,7 +134,7 @@ make test-elm      # só os testes do frontend
 | Parte  | Responsabilidade | Arquivos principais |
 |--------|------------------|---------------------|
 | Prolog | Interpretação dos diagramas Mermaid, análise de grafos, detecção de ciclos e nós inalcançáveis, cálculo dos níveis de paralelismo, execução e armazenamento dos workflows. | `backend/prolog/fsm.pl`, `backend/prolog/graph.pl`, `backend/prolog/armazenamento.pl` |
-| Elm    | [...]            | [`frontend/src/...`]   |
+| Elm    | Frontend; pré-validação de workflows.            | [`frontend/src/...`]   |
 | Python | Integração entre Elm e Prolog, exposição das rotas HTTP, validação das entradas e conversão dos resultados para JSON. | `backend/app/main.py`, `backend/app/prolog.py`, `backend/app/rotas_fluxos.py`, `backend/app/armazenamento.py` |
 
 ## 5. Parte em Prolog
