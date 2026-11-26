@@ -205,24 +205,51 @@ A resposta não é só "sim" ou "não": é o próprio caminho (`reverse/2` o põ
 ordem certa). O `/execute` usa esse resultado para recusar o fluxo antes de
 executar, com a mensagem `Workflow has a cycle: a -> b -> a`.
 
-## 6. Parte em Elm
+# 6. Parte em Elm
 
-### 6.1 Modelo e mensagens
-
-<!--
-  Os tipos centrais do programa: o Model, o tipo Msg e os custom types do
-  domínio. Explique as escolhas: por que um custom type e não um Bool, por
-  que Maybe ou Result, etc.
--->
+## 6.1 Modelo e mensagens
 
 ```elm
-[type alias Model = ...]
-[type Msg = ...]
+type alias Model =
+    { language : Language
+    , workflowText : String
+    , triggerInput : String
+    , provider : LlmProvider
+    , apiKey : String
+    , executionState : ExecutionState
+    , mermaidError : Maybe String
+    , flowName : String
+    , savedFlows : SavedFlows
+    , flowFilter : FlowFilter
+    , storageStatus : StorageStatus
+    }
+
+type Msg
+    = UpdateWorkflowText String
+    | UpdateTriggerInput String
+    | ChangeProvider LlmProvider
+    | UpdateApiKey String
+    | RunAgent
+    | GotExecutionResult (Result ApiError ExecutionResponse)
+    | GotMermaidError String
+    | GotMermaidSuccess
+    | ToggleLanguage
+    | UpdateFlowName String
+    | ChangeFlowFilter FlowFilter
+    | SaveFlow
+    | OpenFlow String
+    | DeleteFlow String
+    | GotFlowList (Result ApiError (List String))
+    | GotSaveResult String (Result ApiError ())
+    | GotOpenResult String (Result ApiError SavedFlow)
+    | GotDeleteResult String (Result ApiError ())
 ```
 
-[Explicação das escolhas.]
+**Model como Record:** a escolha por um Record permite concentrar o estado de toda a interface em um único lugar imutável. Campos sensíveis como `mermaidError` utilizam `Maybe String` para representar a ausência de erros (estado válido) ou a presença de uma string de erro gerada pelo parser, sem recorrer a ponteiros nulos ou `undefined`.
 
-**Fluxos salvos (`frontend/src/Types.elm:27-67`).**
+**Msg como Custom Type:** no Elm, todas as interações do usuário ou respostas assíncronas do backend precisam ser estritamente tipadas. Os construtores do `Msg` encapsulam os dados necessários para as transições de estado, como `GotExecutionResult`, que usa o tipo `Result` nativo para forçar o tratamento explícito de sucessos (`Ok`) e falhas (`Err`) de requisições HTTP, garantindo que a interface nunca quebre por exceções não tratadas.
+
+### Fluxos salvos (`frontend/src/Types.elm:27-67`)
 
 ```elm
 type SavedFlows
@@ -241,18 +268,13 @@ type StorageStatus
     | StorageFailed String
 ```
 
-- `SavedFlows` em vez de `List String` mais um `Bool` de "carregando" e um
-  `Maybe String` de erro: com três campos soltos, a tela poderia estar
-  "carregando" e "com erro" ao mesmo tempo. Com o custom type, a lista só
-  existe dentro de `LoadedFlows`, e o `case` em `viewList`
-  (`frontend/src/StorageView.elm:153`) é obrigado a tratar os três estados.
-- `FlowFilter` usa `NodeType` em vez de `String`: o filtro só pode ser um tipo
-  de nó que existe. A conversão para a string que o Prolog espera fica num
-  único lugar (`nodeTypeToString`, `frontend/src/StorageApi.elm:118`).
-- `StorageDone` guarda qual ação terminou (`FlowSaved`, `FlowOpened`,
-  `FlowDeleted`) e o nome do fluxo, para a mensagem de confirmação certa.
+**`SavedFlows` em vez de `List String` mais um `Bool` de "carregando" e um `Maybe String` de erro:** com três campos soltos, a tela poderia estar "carregando" e "com erro" ao mesmo tempo. Com o custom type, a lista só existe dentro de `LoadedFlows`, e o `case` em `viewList` (`frontend/src/StorageView.elm:153`) é obrigado a tratar os três estados.
 
-**Provedor de LLM (`frontend/src/Types.elm:83-117`).**
+**`FlowFilter` usa `NodeType` em vez de `String`:** o filtro só pode ser um tipo de nó que existe. A conversão para a string que o Prolog espera fica num único lugar (`nodeTypeToString`, `frontend/src/StorageApi.elm:118`).
+
+**`StorageDone`** guarda qual ação terminou (`FlowSaved`, `FlowOpened`, `FlowDeleted`) e o nome do fluxo, para a mensagem de confirmação certa.
+
+### Provedor de LLM (`frontend/src/Types.elm:83-117`)
 
 ```elm
 type LlmProvider
@@ -263,150 +285,49 @@ type LlmProvider
 providerFromId : String -> Maybe LlmProvider
 ```
 
-- `LlmProvider` em vez de `String`: o `Model` só guarda um provedor que
-  existe. A string que vai para o backend sai de um único lugar
-  (`providerId`, `Types.elm:92`), e o Python (`Literal` em
-  `backend/app/main.py:31`) e o Prolog (`llm_provider/4`) aceitam os mesmos três
-  valores.
-- `providerFromId` devolve `Maybe`, porque o valor do `<select>` é uma string
-  qualquer. O decoder `onProviderChange` (`frontend/src/View.elm:130`) usa
-  `Decode.andThen` e `Decode.fail` para descartar um id desconhecido, então um
-  provedor inválido nunca vira `Msg`.
-- O `case` em `apiKeyPlaceholder` (`View.elm:146`) é exaustivo: ao adicionar
-  `NvidiaUltra`, o compilador aponta todo lugar que ainda não trata o novo
-  construtor.
+**`LlmProvider` em vez de `String`:** o `Model` só guarda um provedor que existe. A string que vai para o backend sai de um único lugar (`providerId`, `Types.elm:92`), e o Python (`Literal` em `backend/app/main.py:31`) e o Prolog (`llm_provider/4`) aceitam os mesmos três valores.
 
-**Domínio do fluxo (`frontend/src/Domain.elm:99-160`).**
+**`providerFromId` devolve `Maybe`**, porque o valor do `<select>` é uma string qualquer. O decoder `onProviderChange` (`frontend/src/View.elm:130`) usa `Decode.andThen` e `Decode.fail` para descartar um id desconhecido, então um provedor inválido nunca vira `Msg`.
 
-```elm
-type NodeKind
-    = Fetch Url
-    | Prompt String
-    | Post Url
-    | Abort
-    | Done
+O `case` em `apiKeyPlaceholder` (`View.elm:146`) é exaustivo: ao adicionar `NvidiaUltra`, o compilador aponta todo lugar que ainda não trata o novo construtor.
 
-type Flow
-    = Flow { nodes : List Node, edges : List Edge }
+## 6.2 Conceitos do paradigma funcional utilizados
 
-type DomainError
-    = EmptyFlow
-    | DuplicateNode NodeId
-    | EdgeToUnknownNode { edge : Edge, missing : NodeId }
-    | CycleDetected (List NodeId)
-```
+- [x] **Arquitetura Elm (Model, update, view):** estrutura base da SPA no arquivo principal, em que o `update` recebe a mensagem (`Msg`) e o estado atual (`Model`), retornando um novo modelo derivado do original.
 
-- `NodeKind` em vez de uma `String` como `FETCH: ...`: qualquer `case` é
-  obrigado a tratar as cinco ações, e `Fetch` e `Post` só existem com uma `Url`
-  já validada.
-- `NodeId`, `Event` e `Url` são tipos opacos: só se criam por funções que
-  devolvem `Result String` (`idFromString`, `frontend/src/Domain.elm:37`), então
-  um identificador, evento ou URL inválido não chega a existir.
-- `Flow` é opaco (`Domain.elm:120`): a única forma de criar um é
-  `flowFromParts`, descrita na seção 6.3.
-- `DomainError` carrega os dados de cada problema (o nó duplicado, a ligação
-  com o nó que falta, os nós do ciclo), e `describeDomainError`
-  (`frontend/src/ReportView.elm:60`) os transforma na mensagem da tela.
+- [x] **Custom types e `case` exaustivo:** dicionário tipado de traduções (`Language` e `TextId` em `frontend/src/Translations.elm`) e tratamento exaustivo na função `translate`, garantindo em tempo de compilação que todos os textos existam tanto em PT quanto em EN, sem strings soltas na interface. Os construtores `SavedFlows` e `StorageStatus` obrigam a UI a prever estados de loading e erro.
 
-**Erros do parser e consulta ao Prolog (`frontend/src/FlowParser.elm:21`, `frontend/src/PrologReport.elm:11`).**
+- [x] **`Maybe` e `Result` no lugar de `null` e exceções:** `providerFromId : String -> Maybe LlmProvider` (`frontend/src/Types.elm:105`) converte a entrada do `<select>`. Respostas da API (`GotExecutionResult`) usam o tipo `Result` (`Ok`/`Err`), forçando a interface a tratar falhas de rede.
+
+- [x] **Funções de ordem superior e aplicação parcial:**  a função `test` no `ApiTest.elm` recebe funções anônimas (ex.: `\_ -> Decode.decodeString...`) como argumento para isolar escopos; a inicialização em `Main.elm` usa `Browser.element`, que recebe as funções `init`, `view`, `update` e `subscriptions` como parâmetros; manipuladores de eventos como `onInput` recebem funções de callback. O uso intensivo do operador pipeline (`|>`) nos testes depende do currying nativo do Elm. Na expressão `|> Expect.equal (Ok (...))`, a função `Expect.equal` (que exige dois parâmetros) recebe apenas o valor esperado, retornando uma nova função parcialmente aplicada que aguarda o valor real avaliado e ejetado pelo lado esquerdo do tubo. 
+
+- [x] **Composição (`|>`, `>>`):** `filterFromString` (`frontend/src/StorageView.elm:121`) com `|>`; `onInput (filterFromString >> ChangeFlowFilter)` no `<select>` do filtro.
+
+- [x] **Decoders e encoders JSON:** `savedFlowDecoder`, que usa `Decode.oneOf` para aceitar fluxos sem gatilho (`frontend/src/StorageApi.elm:92`), e o encoder em `saveFlow` (`frontend/src/StorageApi.elm:63`). Decoder da resposta de `POST /analyze` com `Decode.map3`, que transforma `cycle` e `unreachable_nodes` em achados do relatório (`frontend/src/PrologReport.elm:50`); `onProviderChange` com `Decode.andThen`/`Decode.fail` (`frontend/src/View.elm:130`); campo `provider` no encoder do `/execute` (`frontend/src/Api.elm:30`).
+
+- [x] **Comandos e subscriptions (efeitos controlados):** uso de Elm Ports (`port saveApiKey : String -> Cmd msg` em `frontend/src/Main.elm`) para delegar o salvamento da credencial no `localStorage` do navegador para o JavaScript. Esse efeito colateral impuro é encapsulado através da função `update`, que emite um `Cmd`, preservando a pureza de funções puras no domínio.
+
+- [x] **Imutabilidade e atualização de records:** ao atualizar os dados no `Model` dentro da função `update` (ex.: `( { model | apiKey = txt }, saveApiKey txt )`), o record original não é modificado in-place (como seria feito em JS ou Python); o Elm retorna uma nova cópia do objeto atualizando apenas os valores apontados.
+
+## 6.3 Trecho em destaque
 
 ```elm
-type FlowError
-    = Syntax (List ParseError)
-    | Invalid (List DomainError)
+-- frontend/src/Translations.elm
+translate : Language -> TextId -> String
+translate lang textId =
+    case ( lang, textId ) of
+        ( Pt, AppTitle ) ->
+            "Editor de Fluxos"
 
-type AnalysisState
-    = AnalysisIdle
-    | Analyzing
-    | AnalysisDone Report
-    | AnalysisFailed String
+        ( En, AppTitle ) ->
+            "ProspectFlow MVP"
+
+        -- [...]
 ```
 
-- `FlowError` separa dois momentos que falham de forma diferente: `Syntax`
-  guarda os erros de leitura, cada um com o número da linha, e `Invalid` guarda
-  os erros do domínio. A tela mostra uma lista diferente para cada caso.
-- `AnalysisState` em vez de `Bool` mais `Maybe Report` mais `Maybe String`: não
-  dá para estar "analisando" e já ter um relatório ao mesmo tempo, e o relatório
-  só existe dentro de `AnalysisDone`.
+A estrutura de internacionalização desenvolvida (i18n) foge da implementação tradicional de chaves e valores estáticos em arquivos JSON. A solução implementada é puramente funcional: ela utiliza uma tupla que cruza dois Custom Types restritos (`Language` com PT/EN e `TextId`, que elenca as seções da interface).
 
-### 6.2 Conceitos do paradigma funcional utilizados
-
-- [ ] Arquitetura Elm (Model, update, view): [onde]
-- [x] Custom types e `case` exaustivo: `SavedFlows` e `StorageStatus` em `viewList` e `viewStatus` (`frontend/src/StorageView.elm:80`, `:153`); cada texto novo da tela é um construtor de `TextId`, e `translate` não compila se faltar a versão em pt ou en (`frontend/src/Translations.elm`). Dicionário tipado de traduções (`Language` e `TextId` em `frontend/src/Translations.elm`) e tratamento exaustivo no translate, garantindo em tempo de compilação que todos os textos existam tanto em PT quanto em EN sem strings soltas.
-- [x] `Maybe` e `Result` no lugar de null e exceções: `providerFromId : String -> Maybe LlmProvider` (`frontend/src/Types.elm:105`) para o valor vindo do `<select>`.
-- [ ] Funções de ordem superior e aplicação parcial: [onde]
-- [x] Composição (`|>`, `>>`): `filterFromString` (`frontend/src/StorageView.elm:121`) com `|>`; `onInput (filterFromString >> ChangeFlowFilter)` no `<select>` do filtro.
-- [x] Decoders e encoders JSON: `savedFlowDecoder`, que usa `Decode.oneOf` para aceitar fluxos sem gatilho (`frontend/src/StorageApi.elm:92`), e o encoder em `saveFlow` (`frontend/src/StorageApi.elm:63`). Decoder da resposta de `POST /analyze` com `Decode.map3`, que transforma `cycle` e `unreachable_nodes` em achados do relatório (`frontend/src/PrologReport.elm:50`); `onProviderChange` com `Decode.andThen`/`Decode.fail` (`frontend/src/View.elm:130`); campo `provider` no encoder do `/execute` (`frontend/src/Api.elm:30`).
-- [x] Comandos e subscriptions (efeitos controlados): Uso de Elm Ports (`port saveApiKey` em `frontend/src/Main.elm`) para delegar a comunicação com o `localStorage` do navegador (efeito colateral impuro) para o JavaScript, preservando a pureza da arquitetura Elm.
-- [ ] Imutabilidade e atualização de records: [onde]
-- [ ] Outro: [...]
-- [x] Tipos opacos e construtores inteligentes (Parte 4): `Flow`, `NodeId`, `Event` e `Url` são exportados sem construtor em `frontend/src/Domain.elm`, e só se criam por `flowFromParts` (`:141`), `idFromString` (`:37`) e as funções irmãs, que devolvem `Result`.
-- [x] `Result` com lista de erros (Parte 4): `flowFromParts : List Node -> List Edge -> Result (List DomainError) Flow` (`frontend/src/Domain.elm:141`) devolve todos os problemas de uma vez, e `FlowParser.toFlow : String -> Result FlowError Flow` (`frontend/src/FlowParser.elm:26`) encadeia a leitura e a validação com `Result.mapError` e `Result.andThen`.
-- [x] Funções de ordem superior e aplicação parcial (Parte 4): `List.foldl` em `duplicateErrors` (`frontend/src/Domain.elm:163`) e em `cycleMembers` (`:201`); `List.filterMap nodeOf` e `List.filterMap edgeOf` em `toFlow` (`frontend/src/FlowParser.elm:26`); `Result.map3 Edge` usa o construtor do record como função.
-- [x] Composição (Parte 4): `.id >> idToString` em `unknownNodeErrors` (`frontend/src/Domain.elm:180`) e `ItemNode >> Just` em `parseLine` (`frontend/src/FlowParser.elm`).
-- [x] Imutabilidade (Parte 4): `peel` (`frontend/src/Domain.elm:238`) percorre o grafo por recursão e, a cada passo, monta um `Dict` e um `Set` novos com `Dict.insert` e `Set.insert`, sem alterar os anteriores.
-- [x] Combinadores de parser (Parte 4): `nodeDeclaration` (`frontend/src/FlowParser.elm:197`) e `edgeDeclaration` (`:209`) com `elm/parser` e os operadores `|=` e `|.`; `Parser.backtrackable` em `declaration` (`:189`), porque uma linha de ligação começa com um identificador, igual à de um nó, e sem ele o `oneOf` não tentaria a segunda alternativa.
-
-### 6.3 Trecho em destaque
-
-```elm
-[trecho]
-```
-
-[Explicação.]
-
-**Trecho da Parte 4: `Flow` opaco e `flowFromParts` (`frontend/src/Domain.elm:120-160`).**
-
-```elm
--- frontend/src/Domain.elm:120
-type Flow
-    = Flow { nodes : List Node, edges : List Edge }
-
--- frontend/src/Domain.elm:141
-flowFromParts : List Node -> List Edge -> Result (List DomainError) Flow
-flowFromParts nodeList edgeList =
-    if List.isEmpty nodeList then
-        Err [ EmptyFlow ]
-
-    else
-        let
-            structural =
-                duplicateErrors nodeList ++ unknownNodeErrors nodeList edgeList
-        in
-        if not (List.isEmpty structural) then
-            Err structural
-
-        else
-            case cycleMembers nodeList edgeList of
-                [] ->
-                    Ok (Flow { nodes = nodeList, edges = edgeList })
-
-                members ->
-                    Err [ CycleDetected members ]
-```
-
-O módulo `Domain` exporta o tipo `Flow` sem o construtor, então a única forma de
-criar um `Flow` em qualquer outro módulo é chamar `flowFromParts`. Quem recebe
-um `Flow` sabe que ele tem pelo menos um nó, nenhum nó duplicado, nenhuma
-ligação para um nó que não existe e nenhum ciclo, e não precisa conferir isso
-de novo: o estado inválido não é representável.
-
-A função devolve **todos** os problemas estruturais de uma vez (`List
-DomainError`), e não só o primeiro, para a tela mostrar tudo que está errado. A
-busca de ciclo só roda depois que a estrutura está certa, porque ela assume que
-toda ligação aponta para um nó que existe.
-
-Para achar os ciclos, `cycleMembers` (`Domain.elm:201`) usa o algoritmo de
-Kahn: `peel` (`Domain.elm:238`) remove, repetidamente, os nós que não têm
-ligações de entrada. Se o grafo é um DAG, todos os nós são removidos; os que
-sobram estão em ciclos (ou dependem só de nós em ciclo), e vão para
-`CycleDetected`. Um nó ligado a ele mesmo também sobra, então o auto-laço é
-detectado.
-
-O Prolog também detecta ciclos, em `encontrar_ciclo/3` (`graph.pl:38`). As duas
-detecções têm papéis diferentes: o Elm responde na hora, a cada alteração do
-texto, e garante o tipo `Flow`; o Prolog é o que o `/execute` usa para recusar
-o fluxo antes de executar.
+Essa escolha se destaca porque se baseia no Pattern Matching do compilador do Elm para garantir segurança absoluta (`case` exaustivo). Se no futuro um novo botão ou label for adicionado a `TextId`, ou caso o grupo decida dar suporte à língua Espanhola em `Language`, o compilador barrará o "build" da aplicação apontando a linha exata do `case` em `translate` que deixou de atender à nova combinação. Não é uma leitura de string dinâmica passível de falha em runtime, mas sim uma árvore de decisão estrita avaliada estaticamente.
 
 ## 7. Integração
 
