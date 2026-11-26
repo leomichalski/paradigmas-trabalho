@@ -1,8 +1,6 @@
 # ProspectFlow
 
-ProspectFlow é um MVP em Elm de um motor de fluxos (workflows) de LLM baseado em texto. A aplicação permite definir um pipeline sequencial de enriquecimento de dados e prompts de LLM usando uma sintaxe limitada do Mermaid.js. O frontend em Elm (The Elm Architecture) envia o fluxo para um backend FastAPI, onde um motor em Prolog o executa.
-
-![Demonstração do App](assets/demo.gif)
+ProspectFlow é um editor de fluxos (workflows) de LLM baseado em texto. A aplicação permite definir um pipeline sequencial de enriquecimento de dados e prompts de LLM usando uma sintaxe limitada do Mermaid.js. O frontend em Elm (The Elm Architecture) envia o fluxo para um backend FastAPI, onde um motor em Prolog o executa.
 
 ## Funcionalidades
 
