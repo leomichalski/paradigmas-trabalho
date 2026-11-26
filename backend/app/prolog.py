@@ -37,9 +37,18 @@ graph TD
     provider="openai"
 ):
     # A graph with a cycle has no execution levels: reject it before running
+   # Reject invalid graphs before execution
+# Reject invalid graphs before execution
     analysis = analyze_graph(diagram_text)
+
     if analysis["has_cycle"]:
         raise ValueError("Workflow has a cycle: " + " -> ".join(analysis["cycle"]))
+
+    if analysis["unreachable_nodes"]:
+        raise ValueError(
+            "Workflow has unreachable nodes: "
+            + ", ".join(analysis["unreachable_nodes"])
+        )
 
     # Escape quotes and newlines for Prolog query string
     diagram_escaped = diagram_text.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
