@@ -84,23 +84,41 @@ ProspectFlow é um editor e executor de fluxos de automação com LLM, descritos
 
 **Requisitos** (com as versões que o grupo usou):
 
-- SWI-Prolog [9.x]
-- Node.js [2x.x]
-- [uv / Python 3.x, se usar]
+- [Node.js](https://nodejs.org/) (v20+ recomendado)
+- [pnpm](https://pnpm.io/)
+- O compilador do Elm (0.19.1) e o `elm-format` vêm pelo `pnpm install`, dentro de `frontend/node_modules`. Não precisa instalar o Elm globalmente.
+- [Docker](https://www.docker.com/) para rodar o backend.
 
 **Instalação e execução:**
 
-```sh
-[comandos exatos, na ordem]
-```
+1. Suba o backend (`http://localhost:8000`) a partir da raiz do repositório:
+   ```bash
+   docker compose up --build
+   ```
+
+2. Em outro terminal, instale as dependências do frontend (o app em Elm fica em `frontend/`, não em `frontend/prospectflow/`):
+   ```bash
+   cd frontend
+   pnpm install
+   ```
+
+3. Inicie o servidor de desenvolvimento:
+   ```bash
+   pnpm exec vite
+   ```
+
+4. Abra o navegador na URL local informada pelo Vite (ex.: `http://localhost:5173`).
+
+> **Nota sobre o compilador Elm:** os pacotes `elm` e `elm-format` baixam o binário de verdade durante a instalação. O pnpm bloqueia esse passo por padrão, por isso o `frontend/pnpm-workspace.yaml` libera os dois em `allowBuilds`. Se o Vite falhar com `elm make failed: ... SyntaxError: Invalid or unexpected token`, o binário não foi baixado: apague o `frontend/node_modules` e rode `pnpm install` de novo.
 
 **Testes:**
 
-```sh
-[comando para rodar os testes, se houver]
+```bash
+make test          # Prolog (plunit) + backend (pytest) + frontend (elm-test)
+make test-elm      # só os testes do frontend
 ```
 
-**Testado em:** [Linux / Windows / macOS, navegador]
+**Testado em:** Linux, Firefox
 
 ## 4. Arquitetura
 
@@ -310,7 +328,7 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 | Eduarda Domingos Rodrigues | [...] |
 | Eduardo de Almeida Ferreira | Testes plunit do motor de fluxos (`fsm.pl`) com o alvo no `make test-prolog`; configuração do `elm-test` e do `make test-elm`, com testes de `Domain` (ids, eventos, URLs, nó duplicado, ligação para nó inexistente e ciclos) e de `FlowParser` (erros de sintaxe com número da linha) em `frontend/tests/`; módulo `ApiError.elm`, que guarda o `detail` das respostas de erro do FastAPI para a tela mostrá-lo, e `ExecutionOutcome` no lugar do `status` em `String`; remoção da inicialização duplicada do Elm e do Mermaid no `index.html`; atualização da seção de arquitetura e de uso do README. |
 | Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`). |
-| Leonardo Michalski Miranda | [...] |
+| Leonardo Michalski Miranda | Setup e documentação iniciais do projeto; criação da primeira versão do projeto que executava um fluxo sequencial com nós FETCH, PROMPT ou POST; uso de IA para documentação do projeto e para parsing de diagramas Mermaid; refatoração do motor de execução para utilização de Prolog em vez de somente Elm; revisões e ajustes para garantir a integração do sistema. |
 | Letícia de Carvalho dos Santos | [...] |
 | Maria Samara Alves Silva | Interface de usuário e integração frontend em Elm. Implementou a internacionalização (i18n) segura através de Custom Types (`Translations.elm`); desenvolveu a persistência da Chave de API utilizando `Elm Ports` e `localStorage` via JavaScript (`main.js` e `Main.elm`); criou o feedback visual reativo para erros do Parser (`View.elm`). |
 | Yan Lucas Souza Guimarães | [...] |
