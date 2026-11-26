@@ -128,18 +128,20 @@ make test-elm      # só os testes do frontend
 -->
 
 ```
-[Elm] --HTTP/JSON--> [Python] --janus--> [Prolog]
+[Elm] --HTTP/JSON--> [Python/FastAPI] --PySwip--> [Prolog]
 ```
 
 | Parte  | Responsabilidade | Arquivos principais |
 |--------|------------------|---------------------|
-| Prolog | [...]            | [`backend/prolog/...`] |
+| Prolog | Interpretação dos diagramas Mermaid, análise de grafos, detecção de ciclos e nós inalcançáveis, cálculo dos níveis de paralelismo, execução e armazenamento dos workflows. | `backend/prolog/fsm.pl`, `backend/prolog/graph.pl`, `backend/prolog/armazenamento.pl` |
 | Elm    | [...]            | [`frontend/src/...`]   |
-| Python | [só integração]  | [`backend/app/...`]    |
+| Python | Integração entre Elm e Prolog, exposição das rotas HTTP, validação das entradas e conversão dos resultados para JSON. | `backend/app/main.py`, `backend/app/prolog.py`, `backend/app/rotas_fluxos.py`, `backend/app/armazenamento.py` |
 
 ## 5. Parte em Prolog
 
 ### 5.1 Predicados principais
+
+**Parte 1 — Análise de grafos:** identifica ciclos e nós inalcançáveis e calcula a ordem topológica e os níveis de paralelismo. Os resultados são disponibilizados pelo endpoint `/analyze` e os níveis orientam o motor de execução.
 
 | Predicado | Local | O que faz |
 |-----------|-------|-----------|
@@ -157,8 +159,8 @@ make test-elm      # só os testes do frontend
 ### 5.2 Conceitos do paradigma lógico utilizados
 
 - [x] Fatos e regras como base de conhecimento: os provedores de IA são fatos `llm_provider/4` (`fsm.pl:37`); os fluxos salvos viram fatos persistentes `fluxo_no/3` e `fluxo_transicao/4` (`armazenamento.pl:31`), consultados por regras (`armazenamento.pl:125-145`).
-- [x] Unificação e casamento de padrões: o parser devolve termos `node/2` e `transition/3` (`fsm.pl:18`); o executor encontra a próxima seta unificando `transition(No, Evento, Destino)` com o evento disparado (`fsm.pl:77`); `fluxos_com_ligacao/3` junta três fatos por variáveis compartilhadas (`armazenamento.pl:140`).
-- [x] Recursão (inclusive sobre listas): `dfs_ciclo/4` (`graph.pl:27`), `calcular_niveis/3` (`graph.pl:52`), `run_levels/6` (`fsm.pl:61`) e `parse_lines/3` (`fsm.pl:18`).
+- [x] Unificação e casamento de padrões: o parser devolve termos `node/2` e `transition/3` (`fsm.pl:18`); o executor encontra a próxima seta unificando `transition(No, Evento, Destino)` com o evento disparado (`fsm.pl:77`); `fluxos_com_ligacao/3` junta três fatos por variáveis compartilhadas (`armazenamento.pl:140`). A extração dos identificadores usa `extrair_ids/2` (`graph.pl:3`) e a relação de arestas usa `aresta/3` (`graph.pl:7`).
+- [x] Recursão (inclusive sobre listas): `dfs_ciclo/4` (`graph.pl:27`), `calcular_niveis/3` (`graph.pl:52`), `run_levels/6` (`fsm.pl:61`) e `parse_lines/3` (`fsm.pl:18`). `alcancaveis/3` (`graph.pl:11`) percorre os nós alcançáveis.
 - [x] Backtracking e múltiplas soluções: `encontrar_ciclo/3` tenta cada nó de partida e cada aresta por backtracking até achar um ciclo (`graph.pl:38`); `fluxos_com_ligacao/3` devolve todos os fluxos que satisfazem a consulta (`armazenamento.pl:140`).
 - [x] `findall/3`, `bagof/3`, `setof/3` ou similares: `findall/3` monta cada nível em `calcular_niveis/3` (`graph.pl:52`) e a lista de nós a executar em `run_levels/6` (`fsm.pl:61`); `setof/3` com `^` lista os fluxos sem repetição (`armazenamento.pl:152`).
 - [x] Corte (`!`) ou negação (`\+`), e por que foram necessários: `\+ member/2` impede a busca de ciclo de revisitar um nó do caminho, o que a faria entrar em laço (`graph.pl:35`); `\+ tem_dependencia/3` escolhe os nós sem pai pendente para formar um nível (`graph.pl:56`); o `!` em `encontrar_ciclo/3` para no primeiro ciclo encontrado (`graph.pl:42`).
@@ -418,7 +420,7 @@ o fluxo antes de executar.
 
 | Rota / chamada | Entrada | Saída | Predicado Prolog |
 |----------------|---------|-------|------------------|
-| [`POST /api/...`] | [...] | [...] | [`...`] |
+| `POST /analyze` | `{"diagram_text"}` | `{"valid", "has_cycle", "cycle", "unreachable_nodes", "parallel_levels", "execution_order"}` | `parse_mermaid_text/3` e `analisar_grafo/7` |
 | `POST /execute` | `{"api_key", "diagram_text", "trigger_input", "provider"}`; `provider` é `openai`, `nvidia` ou `nvidia_ultra` (padrão `openai`) | `{"status", "message", "logs"}`; 400 se o grafo tiver ciclo ou nó inalcançável; 422 se o provedor for desconhecido | `execute_workflow_from_text/5` |
 | `GET /fluxos` | `?tipo=post` (opcional) | `{"fluxos": ["a", "b"]}` | `fluxos_salvos/1` ou `fluxos_com_tipo/2` |
 | `POST /fluxos` | `{"nome", "diagram_text", "trigger_input"}` | `{"nome"}`; 400 se o nome for vazio ou o diagrama não tiver nós | `salvar_fluxo/3` |
@@ -432,8 +434,8 @@ o fluxo antes de executar.
   pytest, elm-test), roteiros de teste manual, casos de borda verificados.
 -->
 
-- [O que foi testado e como.]
-- [Casos de borda considerados.]
+- **Análise de grafos (Parte 1):** 8 testes automatizados em `backend/tests/test_graph.py`, utilizando pytest, `TestClient` do FastAPI e integração real com Prolog. Os testes verificam a análise de fluxos sequenciais e paralelos, ordenação topológica, detecção de ciclos e autolaços, identificação de nós inalcançáveis, análise de diagramas vazios, ausência do campo obrigatório `diagram_text` e rejeição de grafos cíclicos pelo endpoint `/execute`.
+- **Validação manual da execução paralela (Parte 1):** testes realizados diretamente no Prolog, pelo Swagger e pela interface Elm, utilizando um servidor HTTP local com suporte a requisições concorrentes. Foi validado um workflow completo com NVIDIA NIM (FETCH → PROMPT → dois POSTs paralelos → DONE). Ambos os POSTs receberam a mesma resposta gerada pela IA, retornaram HTTP 200 e iniciaram com aproximadamente 1,8 ms de diferença. Com uma espera controlada de três segundos em cada requisição, a execução conjunta dos POSTs levou aproximadamente três segundos, em comparação com os seis segundos estimados para uma execução sequencial.
 - **Frontend (elm-test):** 75 testes em `frontend/tests/` (`make test-elm`), todos sobre funções puras, sem navegador nem backend. `DomainTest` e `FlowParserTest` cobrem os casos de borda do domínio: texto vazio, nó duplicado, ligação para nó não declarado, ciclo (inclusive auto-laço), losango e ligações duplas que não são ciclo, fim de linha do Windows (`\r\n`) e `PROMPT` com dois-pontos no texto. `ApiErrorTest` cobre os formatos de erro do FastAPI (`detail` em texto, em lista no 422, corpo que não é JSON, corpo vazio).
 - **Prolog (fsm.pl):** [N] testes plunit em `backend/prolog/test_fsm.pl` (`make test-prolog`) para [o que eles cobrem].
 - **Execução e provedores de LLM:** testes pytest (`make test-backend`):
@@ -491,8 +493,8 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
   problema escondido que o avaliador descobre sozinho.
 -->
 
-- [Limitação ou bug conhecido, e em que situação acontece.]
-- [O que o grupo faria com mais tempo.]
+- **Análise estrutural do grafo:** os níveis de paralelismo são calculados considerando todas as conexões do grafo. Entretanto, a execução de cada nó depende dos eventos produzidos durante o workflow.
+- **Melhorias futuras:** implementar estratégias para combinar os resultados de ramificações paralelas e aprimorar a identificação do estado final da execução.
 - Na execução em paralelo, se um nó tem dois pais ativados, vale o contexto
   (`{{input}}`) do primeiro; as saídas dos dois pais não são combinadas
   (`fsm.pl:57-59`).
@@ -501,6 +503,8 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 - O modelo NVIDIA NIM Ultra (550B) é bem mais lento que os outros; o nó PROMPT
   não tem tempo limite configurável.
 
+
+- **Tratamento do resultado da execução:** o status de sucesso da requisição HTTP não distingue necessariamente um workflow finalizado em DONE de um finalizado em ABORT.
 
 ## 10. Contribuição de cada integrante
 
@@ -515,7 +519,7 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 | Eduardo de Almeida Ferreira | Testes plunit do motor de fluxos (`fsm.pl`) com o alvo no `make test-prolog`; configuração do `elm-test` e do `make test-elm`, com testes de `Domain` (ids, eventos, URLs, nó duplicado, ligação para nó inexistente e ciclos) e de `FlowParser` (erros de sintaxe com número da linha) em `frontend/tests/`; módulo `ApiError.elm`, que guarda o `detail` das respostas de erro do FastAPI para a tela mostrá-lo, e `ExecutionOutcome` no lugar do `status` em `String`; remoção da inicialização duplicada do Elm e do Mermaid no `index.html`; atualização da seção de arquitetura e de uso do README. |
 | Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`). |
 | Leonardo Michalski Miranda | Setup e documentação iniciais do projeto; criação da primeira versão do projeto que executava um fluxo sequencial com nós FETCH, PROMPT ou POST; uso de IA para documentação do projeto e para parsing de diagramas Mermaid; refatoração do motor de execução para utilização de Prolog em vez de somente Elm; revisões e ajustes para garantir a integração do sistema. |
-| Letícia de Carvalho dos Santos | [...] |
+| Letícia de Carvalho dos Santos | Parte 1 — Análise de grafos: implementação da análise de grafos em Prolog (`graph.pl`), incluindo detecção de ciclos por DFS, identificação de nós inalcançáveis, ordenação topológica e cálculo dos níveis de paralelismo; integração Python–Prolog e implementação do endpoint `/analyze`; contribuição aos testes automatizados de análise de grafos (`test_graph.py`); correção do predicado `next_transition/4` e da validação de nós inalcançáveis no `/execute`; validação manual da execução paralela pelo Prolog, Swagger e interface Elm, incluindo a execução de um workflow completo com NVIDIA NIM e dois POSTs concorrentes. |
 | Maria Samara Alves Silva | Interface de usuário e integração frontend em Elm. Implementou a internacionalização (i18n) segura através de Custom Types (`Translations.elm`); desenvolveu a persistência da Chave de API utilizando `Elm Ports` e `localStorage` via JavaScript (`main.js` e `Main.elm`); criou o feedback visual reativo para erros do Parser (`View.elm`). |
 | Yan Lucas Souza Guimarães | Execução do fluxo em paralelo por níveis do grafo em Prolog (`run_levels/6`, `run_state/7` em `fsm.pl`, com `concurrent_maplist/3`) e recusa de fluxos com ciclo no `/execute`, com teste pytest; escolha do provedor de LLM para os nós PROMPT (OpenAI, NVIDIA NIM e NVIDIA NIM Ultra 550B): fatos `llm_provider/4` no Prolog, campo `provider` no `/execute` com testes, e o custom type `LlmProvider` com o seletor na tela em Elm (`Types.elm`, `View.elm`, `Api.elm`); correção do frontend para chamar `/analyze` e decodificar sua resposta (`PrologApi.elm`, `PrologReport.elm`); correções para o app rodar de ponta a ponta (inicialização duplicada do Elm, eventos do PROMPT, imports dos testes, Makefile com pnpm e CORS); tradução do README para português e instruções de execução |
 
@@ -550,7 +554,7 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
-| [Nome ou "nenhuma"] | [...] | [...] |
+| ChatGPT / Codex | (Parte 1) Geração e revisão de trechos de código para análise de grafos em Prolog, integração com Python e testes automatizados. Auxílio na correção de erros e compreensão do código. | Testes automatizados com pytest, consultas no SWI-Prolog e testes manuais pelo Swagger e pela interface Elm, incluindo a validação da execução paralela. |
 | Claude | Gerou o código da parte de armazenamento (Prolog do armazenamento, rotas `/fluxos`, tela "Fluxos salvos" em Elm) e os testes; explicou o código e ajudou a configurar o ambiente, porém tudo foi revisado pelo grupo | Testes automatizados (plunit e pytest), roteiro de teste manual na tela, revisão do código e explicação de cada parte |
 | Gemini / ChatGPT | Auxílio na Parte 6: resolução de erros de build do Vite, elaboração do dicionário de tradução e código para integração do Elm Ports com LocalStorage. Atividades realizadas com auxilo da inteligência artificial e revisadas pelo grupo. | Revisão da compilação e teste manual contínuo no navegador para garantir que a UI e a chave de API mantinham o comportamento desejado. |
 | Claude (Claude Code) | Parte do Yan: gerou o código e os testes da execução em paralelo por níveis, da escolha do provedor de LLM e da correção do `/analyze` no frontend, e ajudou a diagnosticar os problemas de ambiente (Elm via pnpm, CORS); os commits estão marcados com `Co-Authored-By: Claude` | Testes pytest, `elm make` compilando, execução manual dos fluxos com os três provedores e revisão de cada alteração |
@@ -589,7 +593,9 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
   - Como a forma de pensar mudou entre as duas linguagens?
 -->
 
-[Reflexão.]
+O paradigma lógico facilitou a representação das relações entre os nós e as transições dos workflows. A utilização de predicados, recursão, unificação e backtracking permitiu implementar a detecção de ciclos, a identificação de nós inalcançáveis e o cálculo dos níveis de paralelismo de forma declarativa.
+
+Uma das principais dificuldades foi a mudança da forma de pensar da programação imperativa para a programação lógica, especialmente na compreensão do mecanismo de busca de soluções do Prolog. A integração com Python também exigiu atenção às diferenças na representação dos dados entre as linguagens, como a distinção entre átomos e strings.
 
 ---
 
