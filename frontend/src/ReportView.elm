@@ -23,6 +23,8 @@ view config =
         , viewLocalCheck config.flow
         , viewPrologCheck config
         ]
+
+
 viewLocalCheck : Result FlowError Domain.Flow -> Html msg
 viewLocalCheck flow =
     case flow of
@@ -77,6 +79,8 @@ describeDomainError error =
 
         CycleDetected members ->
             "Há um ciclo envolvendo: " ++ String.join ", " (List.map Domain.idToString members) ++ "."
+
+
 viewPrologCheck : Config msg -> Html msg
 viewPrologCheck config =
     div []

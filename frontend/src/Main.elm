@@ -1,13 +1,16 @@
 port module Main exposing (main)
 
-import Browser
 import Api
 import ApiError
+import Browser
 import StorageApi
+import Translations exposing (Language(..), TextId(..))
 import Types exposing (..)
 import View exposing (view)
-import Translations exposing (Language(..), TextId(..))
+
+
 port saveApiKey : String -> Cmd msg
+
 
 main : Program String Model Msg
 main =
@@ -17,6 +20,8 @@ main =
         , update = update
         , subscriptions = subscriptions
         }
+
+
 init : String -> ( Model, Cmd Msg )
 init savedApiKey =
     ( { language = Pt
@@ -33,6 +38,7 @@ init savedApiKey =
       }
     , StorageApi.listFlows AllFlows
     )
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -81,12 +87,13 @@ update msg model =
 
         GotMermaidSuccess ->
             ( { model | mermaidError = Nothing }, Cmd.none )
-            
+
         ToggleLanguage ->
             let
                 newLang =
                     if model.language == Pt then
                         En
+
                     else
                         Pt
             in
@@ -149,7 +156,9 @@ update msg model =
         GotDeleteResult _ (Err httpErr) ->
             ( { model | storageStatus = StorageFailed (ApiError.toString httpErr) }, Cmd.none )
 
-{-| A mensagem do backend, ou o próprio `status` se ela veio vazia. -}
+
+{-| A mensagem do backend, ou o próprio `status` se ela veio vazia.
+-}
 failureText : String -> String -> String
 failureText status message =
     if String.isEmpty (String.trim message) then

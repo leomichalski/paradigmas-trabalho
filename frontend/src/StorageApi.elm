@@ -114,7 +114,7 @@ deleteFlow name =
         }
 
 
-{-| O mesmo nome que o Prolog usa (tipo_da_acao/2).
+{-| O mesmo nome que o Prolog usa (tipo\_da\_acao/2).
 -}
 nodeTypeToString : NodeType -> String
 nodeTypeToString nodeType =

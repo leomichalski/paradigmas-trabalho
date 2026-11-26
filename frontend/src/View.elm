@@ -6,8 +6,9 @@ import Html.Events exposing (on, onClick, onInput, targetValue)
 import Html.Keyed
 import Json.Decode as Decode
 import StorageView exposing (viewStorage)
-import Types exposing (..)
 import Translations exposing (Language(..), TextId(..), translate)
+import Types exposing (..)
+
 
 
 -- isError : Result e a -> Bool
@@ -15,7 +16,6 @@ import Translations exposing (Language(..), TextId(..), translate)
 --     case res of
 --         Err _ ->
 --             True
-
 --         Ok _ ->
 --             False
 
@@ -23,8 +23,7 @@ import Translations exposing (Language(..), TextId(..), translate)
 view : Model -> Html Msg
 view model =
     main_ [ class "app" ]
-        [ 
-          div [ class "actions", attribute "style" "margin-bottom: 2rem; justify-content: flex-end;" ]
+        [ div [ class "actions", attribute "style" "margin-bottom: 2rem; justify-content: flex-end;" ]
             [ button [ class "btn btn--quiet", onClick ToggleLanguage ]
                 [ text (translate model.language LanguageToggle) ]
             ]
