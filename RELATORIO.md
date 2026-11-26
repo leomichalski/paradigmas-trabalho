@@ -141,59 +141,69 @@ make test-elm      # só os testes do frontend
 
 ### 5.1 Predicados principais
 
-<!--
-  Os predicados mais importantes, com o local no código. Use a notação
-  nome/aridade e indique entradas (+) e saídas (-), como na documentação
-  do SWI-Prolog.
--->
-
 | Predicado | Local | O que faz |
 |-----------|-------|-----------|
-| [`resolver(+Entrada, -Saida)`] | [`arquivo.pl:42`] | [...] |
-| [...] | [...] | [...] |
-| `salvar_fluxo(+Nome, +Texto, +Gatilho)` | `backend/prolog/armazenamento.pl:53` | Lê o diagrama com o parser do `fsm.pl` e grava o fluxo como fatos (texto, gatilho, nós e transições). Substitui o fluxo se o nome já existir |
-| `carregar_fluxo(+Nome, -Texto, -Gatilho)` | `backend/prolog/armazenamento.pl:86` | Devolve o diagrama e o gatilho de um fluxo salvo. Falha se ele não existe |
-| `fluxos_com_tipo(+Tipo, -Nomes)` | `backend/prolog/armazenamento.pl:129` | "Quais fluxos usam um nó POST?" |
-| `fluxos_com_evento(+Evento, -Nomes)` | `backend/prolog/armazenamento.pl:134` | "Quais fluxos tratam o evento `fetch_failed`?" |
-| `fluxos_com_ligacao(+TipoA, +TipoB, -Nomes)` | `backend/prolog/armazenamento.pl:140` | "Quais fluxos ligam um PROMPT direto a um POST?" Junta três fatos numa só consulta |
-| `tipo_da_acao(+Acao, -Tipo)` | `backend/prolog/armazenamento.pl:112` | `"PROMPT: Oi"` vira `prompt`, `"DONE"` vira `done` |
-| `llm_provider(?Id, ?Rotulo, ?Url, ?Modelo)` | `backend/prolog/fsm.pl:37-39` | Fatos com os provedores de LLM do nó PROMPT: OpenAI (`gpt-4o-mini`), NVIDIA NIM (`nemotron-3.5-bolt-e4b`) e NVIDIA NIM Ultra (`nemotron-3-ultra-550b`). Um provedor novo é só mais um fato |
-| `execute_workflow_from_text(+Texto, +Gatilho, +ApiKey, +Provedor, -Log)` | `backend/prolog/fsm.pl:45` | Lê o diagrama, calcula os níveis com `niveis_paralelismo/3` (falha se o grafo tiver ciclo) e executa o fluxo com o provedor escolhido |
-| `run_levels(+Niveis, +Nos, +Transicoes, +Ativos, +LogsIn, -LogsOut)` | `backend/prolog/fsm.pl:60` | Percorre os níveis em ordem e roda em paralelo só os nós ativados pelo evento do nó pai |
-| `run_state(+No, +Nos, +Ctx, -Evento, -NovoCtx, +LogsIn, -LogsOut)` | `backend/prolog/fsm.pl:86` | Executa um único nó (FETCH, PROMPT ou POST) e devolve o evento disparado e o novo contexto |
-| `next_transition(+Transicoes, +No, +Evento, -Destino)` | `backend/prolog/fsm.pl:77` | Destino de uma aresta cujo evento casa com o disparado; por backtracking, todos eles |
+| `parse_mermaid_text(+Texto, -Nos, -Transicoes)` | `backend/prolog/fsm.pl:31` | Lê o diagrama Mermaid e devolve termos `node(Id, Acao)` e `transition(Origem, Evento, Destino)`. É o parser usado pelo executor, pela análise e pelo armazenamento |
+| `execute_workflow_from_text(+Texto, +Gatilho, +Chave, +Provedor, -Log)` | `backend/prolog/fsm.pl:45` | Ponto de entrada da execução: calcula os níveis do grafo, executa o fluxo e devolve o log |
+| `run_levels(+Niveis, +Nos, +Transicoes, +Ativos, +Log0, -Log)` | `backend/prolog/fsm.pl:61` | Percorre os níveis e executa em paralelo os nós ativados pelo evento que de fato ocorreu |
+| `run_state(+No, +Nos, +Contexto, -Evento, -NovoContexto, +Log0, -Log)` | `backend/prolog/fsm.pl:86` | Executa um nó (FETCH, PROMPT, POST, ABORT ou DONE) e devolve o evento que ele disparou |
+| `llm_provider(?Id, ?Nome, ?Url, ?Modelo)` | `backend/prolog/fsm.pl:37` | Fatos com o endereço e o modelo de cada provedor de IA usado pelos nós PROMPT |
+| `encontrar_ciclo(+Nos, +Transicoes, -Ciclo)` | `backend/prolog/graph.pl:38` | Procura um ciclo no fluxo e devolve o caminho dele, como `[a, b, a]` |
+| `nos_inalcancaveis(+Nos, +Transicoes, -Inalcancaveis)` | `backend/prolog/graph.pl:19` | Lista os nós que não podem ser alcançados a partir do primeiro nó |
+| `niveis_paralelismo(+Nos, +Transicoes, -Niveis)` | `backend/prolog/graph.pl:62` | Agrupa os nós em níveis: os de um mesmo nível não dependem uns dos outros e podem rodar juntos |
+| `salvar_fluxo(+Nome, +Texto, +Gatilho)` | `backend/prolog/armazenamento.pl:53` | Grava um fluxo como fatos persistentes (texto, gatilho, nós e transições) |
+| `fluxos_com_ligacao(+TipoA, +TipoB, -Nomes)` | `backend/prolog/armazenamento.pl:140` | Consulta os fluxos salvos: "quais fluxos ligam um PROMPT direto a um POST?" |
 
 ### 5.2 Conceitos do paradigma lógico utilizados
 
-<!--
-  Marque o que o projeto usa DE FATO e indique onde. Não é preciso usar
-  tudo; é preciso explicar bem o que foi usado.
--->
-
-- [x] Fatos e regras como base de conhecimento: os fluxos salvos viram fatos `fluxo_no/3`, `fluxo_transicao/4`, `fluxo_texto/2` e `fluxo_gatilho/2`, gravados em arquivo com `library(persistency)` (`armazenamento.pl:31`); as consultas são regras sobre eles (`armazenamento.pl:125-145`). Os provedores de LLM são fatos `llm_provider/4` (`fsm.pl:37-39`): o nó PROMPT consulta `llm_provider(Context.provider, ...)` (`fsm.pl:125`) em vez de um `if` por provedor. [outras partes: onde]
-- [ ] Unificação e casamento de padrões: [onde]
-- [x] Recursão (inclusive sobre listas): `run_levels/6` (`fsm.pl:60-65`) é recursivo sobre a lista de níveis do grafo, com o caso base `run_levels([], ...)` devolvendo os logs acumulados. [outras partes: onde]
-- [x] Backtracking e múltiplas soluções: `fluxos_com_ligacao/3` (`armazenamento.pl:140`) percorre por backtracking todas as transições e todos os nós que satisfazem a conjunção, e devolve todos os fluxos que casam. `next_transition/4` (`fsm.pl:77`) tem uma solução por aresta que sai do nó com o evento disparado; assim um nó pode ativar vários filhos ao mesmo tempo. [outras partes: onde]
-- [x] `findall/3`, `bagof/3`, `setof/3` ou similares: `setof/3` com quantificador existencial `^` em `nomes_onde/3` (`armazenamento.pl:152`), que dá a lista de nomes ordenada e sem repetição. `findall/3` em `run_levels/6` seleciona os nós do nível que foram ativados (`fsm.pl:62`) e em `run_node/4` junta todos os destinos do evento (`fsm.pl:69`). [outras partes: onde]
-- [ ] Corte (`!`) ou negação (`\+`), e por que foram necessários: [onde]
-- [ ] Programação por restrições (CLP(FD) ou outra): [onde]
-- [x] Predicados de ordem superior (`maplist`, `foldl`, `include`...): `forall/2` para gravar cada nó e transição (`armazenamento.pl:63-66`); `maplist/3` com lambda da `library(yall)` para converter os nomes (`armazenamento.pl:154`); `nomes_onde/3` recebe o próprio objetivo da consulta como argumento. `concurrent_maplist/3` executa em paralelo os nós ativos de um mesmo nível, e `foldl/4` junta os resultados em novos nós ativos e logs (`fsm.pl:63-64`). [outras partes: onde]
-- [ ] Outro: [...]
+- [x] Fatos e regras como base de conhecimento: os provedores de IA são fatos `llm_provider/4` (`fsm.pl:37`); os fluxos salvos viram fatos persistentes `fluxo_no/3` e `fluxo_transicao/4` (`armazenamento.pl:31`), consultados por regras (`armazenamento.pl:125-145`).
+- [x] Unificação e casamento de padrões: o parser devolve termos `node/2` e `transition/3` (`fsm.pl:18`); o executor encontra a próxima seta unificando `transition(No, Evento, Destino)` com o evento disparado (`fsm.pl:77`); `fluxos_com_ligacao/3` junta três fatos por variáveis compartilhadas (`armazenamento.pl:140`).
+- [x] Recursão (inclusive sobre listas): `dfs_ciclo/4` (`graph.pl:27`), `calcular_niveis/3` (`graph.pl:52`), `run_levels/6` (`fsm.pl:61`) e `parse_lines/3` (`fsm.pl:18`).
+- [x] Backtracking e múltiplas soluções: `encontrar_ciclo/3` tenta cada nó de partida e cada aresta por backtracking até achar um ciclo (`graph.pl:38`); `fluxos_com_ligacao/3` devolve todos os fluxos que satisfazem a consulta (`armazenamento.pl:140`).
+- [x] `findall/3`, `bagof/3`, `setof/3` ou similares: `findall/3` monta cada nível em `calcular_niveis/3` (`graph.pl:52`) e a lista de nós a executar em `run_levels/6` (`fsm.pl:61`); `setof/3` com `^` lista os fluxos sem repetição (`armazenamento.pl:152`).
+- [x] Corte (`!`) ou negação (`\+`), e por que foram necessários: `\+ member/2` impede a busca de ciclo de revisitar um nó do caminho, o que a faria entrar em laço (`graph.pl:35`); `\+ tem_dependencia/3` escolhe os nós sem pai pendente para formar um nível (`graph.pl:56`); o `!` em `encontrar_ciclo/3` para no primeiro ciclo encontrado (`graph.pl:42`).
+- [ ] Programação por restrições (CLP(FD) ou outra): não usada.
+- [x] Predicados de ordem superior (`maplist`, `foldl`, `include`...): `concurrent_maplist/3` executa os nós de um nível em paralelo e `foldl/4` junta os resultados (`fsm.pl:63-64`); `maplist/3` converte os nomes dos fluxos (`armazenamento.pl:154`).
+- [x] Outro: fatos persistentes em arquivo com `library(persistency)`, que continuam salvos depois de reiniciar o servidor (`armazenamento.pl:31`).
 
 ### 5.3 Trecho em destaque
 
-<!--
-  Escolha o trecho de Prolog de que o grupo mais se orgulha (ou o mais
-  difícil). Cole o código e explique como ele funciona: o que é declarado,
-  como o Prolog chega à resposta, e por que essa solução é "lógica" e não
-  uma tradução de um algoritmo imperativo.
--->
-
 ```prolog
-[trecho]
+% backend/prolog/graph.pl:27
+dfs_ciclo(Transitions, Atual, Caminho, Ciclo) :-
+    aresta(Transitions, Atual, Proximo),
+    member(Proximo, Caminho),
+    !,
+    reverse([Proximo | Caminho], Ciclo).
+
+dfs_ciclo(Transitions, Atual, Caminho, Ciclo) :-
+    aresta(Transitions, Atual, Proximo),
+    \+ member(Proximo, Caminho),
+    dfs_ciclo(Transitions, Proximo, [Proximo | Caminho], Ciclo).
+
+% backend/prolog/graph.pl:38
+encontrar_ciclo(Nodes, Transitions, Ciclo) :-
+    extrair_ids(Nodes, TodosIds),
+    member(Inicio, TodosIds),
+    dfs_ciclo(Transitions, Inicio, [Inicio], Ciclo),
+    !.
 ```
 
-[Explicação.]
+A detecção de ciclo é escrita como duas regras, sem pilha nem laço explícito.
+A primeira diz **quando há ciclo**: de `Atual` sai uma aresta para um nó que
+já está no `Caminho` percorrido. A segunda diz **como continuar**: de `Atual`
+sai uma aresta para um nó ainda fora do caminho, que entra nele, e a busca
+segue a partir dali.
+
+Quem escolhe qual aresta tentar, e volta atrás quando um caminho não leva a
+ciclo, é o backtracking do Prolog. Em `encontrar_ciclo/3`, o `member/2` gera
+cada nó como ponto de partida, também por backtracking. A negação
+(`\+ member/2`) garante que a busca nunca entra no próprio laço que está
+procurando, e o corte (`!`) faz parar no primeiro ciclo encontrado.
+
+A resposta não é só "sim" ou "não": é o próprio caminho (`reverse/2` o põe na
+ordem certa). O `/execute` usa esse resultado para recusar o fluxo antes de
+executar, com a mensagem `Workflow has a cycle: a -> b -> a`.
 
 ## 6. Parte em Elm
 
@@ -270,10 +280,10 @@ providerFromId : String -> Maybe LlmProvider
 
 - [ ] Arquitetura Elm (Model, update, view): [onde]
 - [x] Custom types e `case` exaustivo: `SavedFlows` e `StorageStatus` em `viewList` e `viewStatus` (`frontend/src/StorageView.elm:80`, `:153`); cada texto novo da tela é um construtor de `TextId`, e `translate` não compila se faltar a versão em pt ou en (`frontend/src/Translations.elm`). Dicionário tipado de traduções (`Language` e `TextId` em `frontend/src/Translations.elm`) e tratamento exaustivo no translate, garantindo em tempo de compilação que todos os textos existam tanto em PT quanto em EN sem strings soltas.
-- [x] `Maybe` e `Result` no lugar de null e exceções: `providerFromId : String -> Maybe LlmProvider` (`frontend/src/Types.elm:105`) para o valor vindo do `<select>`. [outras partes: onde]
+- [x] `Maybe` e `Result` no lugar de null e exceções: `providerFromId : String -> Maybe LlmProvider` (`frontend/src/Types.elm:105`) para o valor vindo do `<select>`.
 - [ ] Funções de ordem superior e aplicação parcial: [onde]
-- [x] Composição (`|>`, `>>`): `filterFromString` (`frontend/src/StorageView.elm:121`) com `|>`; `onInput (filterFromString >> ChangeFlowFilter)` no `<select>` do filtro. [outras partes: onde]
-- [x] Decoders e encoders JSON: `savedFlowDecoder`, que usa `Decode.oneOf` para aceitar fluxos sem gatilho (`frontend/src/StorageApi.elm:92`), e o encoder em `saveFlow` (`frontend/src/StorageApi.elm:63`). Decoder da resposta de `POST /analyze` com `Decode.map3`, que transforma `cycle` e `unreachable_nodes` em achados do relatório (`frontend/src/PrologReport.elm:50`); `onProviderChange` com `Decode.andThen`/`Decode.fail` (`frontend/src/View.elm:130`); campo `provider` no encoder do `/execute` (`frontend/src/Api.elm:30`). [outras partes: onde]
+- [x] Composição (`|>`, `>>`): `filterFromString` (`frontend/src/StorageView.elm:121`) com `|>`; `onInput (filterFromString >> ChangeFlowFilter)` no `<select>` do filtro.
+- [x] Decoders e encoders JSON: `savedFlowDecoder`, que usa `Decode.oneOf` para aceitar fluxos sem gatilho (`frontend/src/StorageApi.elm:92`), e o encoder em `saveFlow` (`frontend/src/StorageApi.elm:63`). Decoder da resposta de `POST /analyze` com `Decode.map3`, que transforma `cycle` e `unreachable_nodes` em achados do relatório (`frontend/src/PrologReport.elm:50`); `onProviderChange` com `Decode.andThen`/`Decode.fail` (`frontend/src/View.elm:130`); campo `provider` no encoder do `/execute` (`frontend/src/Api.elm:30`).
 - [x] Comandos e subscriptions (efeitos controlados): Uso de Elm Ports (`port saveApiKey` em `frontend/src/Main.elm`) para delegar a comunicação com o `localStorage` do navegador (efeito colateral impuro) para o JavaScript, preservando a pureza da arquitetura Elm.
 - [ ] Imutabilidade e atualização de records: [onde]
 - [ ] Outro: [...]
