@@ -55,7 +55,7 @@
     O avaliador vai olhar exatamente esta versão. Para criar uma tag:
       git tag v1.0 && git push origin v1.0
   -->
-- **Ponto de partida:** [template do Sudoku com ajustes | variante do Sudoku | outro jogo conhecido | remix original | jogo inventado]
+- **Ponto de partida:** inspirado em plataformas de automação de workflows, como o n8n.
   <!--
     Escolha UMA faixa. Ela define o ajuste de escopo da nota do grupo
     (AVALIACAO.md, seção 1.5). O professor confirma a faixa na apresentação.
