@@ -276,6 +276,59 @@ providerFromId : String -> Maybe LlmProvider
   `NvidiaUltra`, o compilador aponta todo lugar que ainda não trata o novo
   construtor.
 
+**Domínio do fluxo (`frontend/src/Domain.elm:99-160`).**
+
+```elm
+type NodeKind
+    = Fetch Url
+    | Prompt String
+    | Post Url
+    | Abort
+    | Done
+
+type Flow
+    = Flow { nodes : List Node, edges : List Edge }
+
+type DomainError
+    = EmptyFlow
+    | DuplicateNode NodeId
+    | EdgeToUnknownNode { edge : Edge, missing : NodeId }
+    | CycleDetected (List NodeId)
+```
+
+- `NodeKind` em vez de uma `String` como `FETCH: ...`: qualquer `case` é
+  obrigado a tratar as cinco ações, e `Fetch` e `Post` só existem com uma `Url`
+  já validada.
+- `NodeId`, `Event` e `Url` são tipos opacos: só se criam por funções que
+  devolvem `Result String` (`idFromString`, `frontend/src/Domain.elm:37`), então
+  um identificador, evento ou URL inválido não chega a existir.
+- `Flow` é opaco (`Domain.elm:120`): a única forma de criar um é
+  `flowFromParts`, descrita na seção 6.3.
+- `DomainError` carrega os dados de cada problema (o nó duplicado, a ligação
+  com o nó que falta, os nós do ciclo), e `describeDomainError`
+  (`frontend/src/ReportView.elm:60`) os transforma na mensagem da tela.
+
+**Erros do parser e consulta ao Prolog (`frontend/src/FlowParser.elm:21`, `frontend/src/PrologReport.elm:11`).**
+
+```elm
+type FlowError
+    = Syntax (List ParseError)
+    | Invalid (List DomainError)
+
+type AnalysisState
+    = AnalysisIdle
+    | Analyzing
+    | AnalysisDone Report
+    | AnalysisFailed String
+```
+
+- `FlowError` separa dois momentos que falham de forma diferente: `Syntax`
+  guarda os erros de leitura, cada um com o número da linha, e `Invalid` guarda
+  os erros do domínio. A tela mostra uma lista diferente para cada caso.
+- `AnalysisState` em vez de `Bool` mais `Maybe Report` mais `Maybe String`: não
+  dá para estar "analisando" e já ter um relatório ao mesmo tempo, e o relatório
+  só existe dentro de `AnalysisDone`.
+
 ### 6.2 Conceitos do paradigma funcional utilizados
 
 - [ ] Arquitetura Elm (Model, update, view): [onde]
@@ -287,6 +340,12 @@ providerFromId : String -> Maybe LlmProvider
 - [x] Comandos e subscriptions (efeitos controlados): Uso de Elm Ports (`port saveApiKey` em `frontend/src/Main.elm`) para delegar a comunicação com o `localStorage` do navegador (efeito colateral impuro) para o JavaScript, preservando a pureza da arquitetura Elm.
 - [ ] Imutabilidade e atualização de records: [onde]
 - [ ] Outro: [...]
+- [x] Tipos opacos e construtores inteligentes (Parte 4): `Flow`, `NodeId`, `Event` e `Url` são exportados sem construtor em `frontend/src/Domain.elm`, e só se criam por `flowFromParts` (`:141`), `idFromString` (`:37`) e as funções irmãs, que devolvem `Result`.
+- [x] `Result` com lista de erros (Parte 4): `flowFromParts : List Node -> List Edge -> Result (List DomainError) Flow` (`frontend/src/Domain.elm:141`) devolve todos os problemas de uma vez, e `FlowParser.toFlow : String -> Result FlowError Flow` (`frontend/src/FlowParser.elm:26`) encadeia a leitura e a validação com `Result.mapError` e `Result.andThen`.
+- [x] Funções de ordem superior e aplicação parcial (Parte 4): `List.foldl` em `duplicateErrors` (`frontend/src/Domain.elm:163`) e em `cycleMembers` (`:201`); `List.filterMap nodeOf` e `List.filterMap edgeOf` em `toFlow` (`frontend/src/FlowParser.elm:26`); `Result.map3 Edge` usa o construtor do record como função.
+- [x] Composição (Parte 4): `.id >> idToString` em `unknownNodeErrors` (`frontend/src/Domain.elm:180`) e `ItemNode >> Just` em `parseLine` (`frontend/src/FlowParser.elm`).
+- [x] Imutabilidade (Parte 4): `peel` (`frontend/src/Domain.elm:238`) percorre o grafo por recursão e, a cada passo, monta um `Dict` e um `Set` novos com `Dict.insert` e `Set.insert`, sem alterar os anteriores.
+- [x] Combinadores de parser (Parte 4): `nodeDeclaration` (`frontend/src/FlowParser.elm:197`) e `edgeDeclaration` (`:209`) com `elm/parser` e os operadores `|=` e `|.`; `Parser.backtrackable` em `declaration` (`:189`), porque uma linha de ligação começa com um identificador, igual à de um nó, e sem ele o `oneOf` não tentaria a segunda alternativa.
 
 ### 6.3 Trecho em destaque
 
@@ -295,6 +354,59 @@ providerFromId : String -> Maybe LlmProvider
 ```
 
 [Explicação.]
+
+**Trecho da Parte 4: `Flow` opaco e `flowFromParts` (`frontend/src/Domain.elm:120-160`).**
+
+```elm
+-- frontend/src/Domain.elm:120
+type Flow
+    = Flow { nodes : List Node, edges : List Edge }
+
+-- frontend/src/Domain.elm:141
+flowFromParts : List Node -> List Edge -> Result (List DomainError) Flow
+flowFromParts nodeList edgeList =
+    if List.isEmpty nodeList then
+        Err [ EmptyFlow ]
+
+    else
+        let
+            structural =
+                duplicateErrors nodeList ++ unknownNodeErrors nodeList edgeList
+        in
+        if not (List.isEmpty structural) then
+            Err structural
+
+        else
+            case cycleMembers nodeList edgeList of
+                [] ->
+                    Ok (Flow { nodes = nodeList, edges = edgeList })
+
+                members ->
+                    Err [ CycleDetected members ]
+```
+
+O módulo `Domain` exporta o tipo `Flow` sem o construtor, então a única forma de
+criar um `Flow` em qualquer outro módulo é chamar `flowFromParts`. Quem recebe
+um `Flow` sabe que ele tem pelo menos um nó, nenhum nó duplicado, nenhuma
+ligação para um nó que não existe e nenhum ciclo, e não precisa conferir isso
+de novo: o estado inválido não é representável.
+
+A função devolve **todos** os problemas estruturais de uma vez (`List
+DomainError`), e não só o primeiro, para a tela mostrar tudo que está errado. A
+busca de ciclo só roda depois que a estrutura está certa, porque ela assume que
+toda ligação aponta para um nó que existe.
+
+Para achar os ciclos, `cycleMembers` (`Domain.elm:201`) usa o algoritmo de
+Kahn: `peel` (`Domain.elm:238`) remove, repetidamente, os nós que não têm
+ligações de entrada. Se o grafo é um DAG, todos os nós são removidos; os que
+sobram estão em ciclos (ou dependem só de nós em ciclo), e vão para
+`CycleDetected`. Um nó ligado a ele mesmo também sobra, então o auto-laço é
+detectado.
+
+O Prolog também detecta ciclos, em `encontrar_ciclo/3` (`graph.pl:38`). As duas
+detecções têm papéis diferentes: o Elm responde na hora, a cada alteração do
+texto, e garante o tipo `Flow`; o Prolog é o que o `/execute` usa para recusar
+o fluxo antes de executar.
 
 ## 7. Integração
 
@@ -354,6 +466,23 @@ providerFromId : String -> Maybe LlmProvider
 - **Casos de borda visuais:** 
 Persistência Segura: Atualizações de página (F5) não perdem a Chave de API, validando o isolamento via Elm Ports e localStorage. Estado Imutável: A alternância do idioma (PT/EN) não interfere no fluxo desenhado nem apaga o grafo visualizado.
 
+- **Domínio e tela de análise (Parte 4):** os casos de borda do parser e do
+  domínio estão nos testes `DomainTest` e `FlowParserTest`, descritos acima.
+  Roteiro manual da tela (`pnpm exec vite`), com o fluxo de exemplo do README
+  colado no campo do fluxo:
+  - o fluxo de exemplo aparece como válido, com a contagem de nós e de
+    ligações e a indicação de que não há ciclos;
+  - trocar uma ação por uma desconhecida (`VOAR: x`) mostra o erro com o número
+    da linha;
+  - escrever uma linha sem sentido mostra o erro de linha inválida, e vários
+    erros aparecem juntos, não só o primeiro;
+  - adicionar uma ligação de volta ao primeiro nó (`done -->|x| start`) mostra
+    os nós do ciclo;
+  - apagar todo o texto faz o painel de análise sumir;
+  - clicar em "Consultar Prolog" com o backend desligado mostra a mensagem de
+    falha da consulta e deixa o resto da tela funcionando;
+  - editar o texto depois de uma consulta descarta o relatório antigo, porque
+    ele descreve o texto anterior.
 
 ## 9. Limitações e problemas conhecidos
 
@@ -382,7 +511,7 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
-| Eduarda Domingos Rodrigues | [...] |
+| Eduarda Domingos Rodrigues | Parte 4 (Elm): domínio do fluxo (`Domain.elm`: `NodeId`, `Url`, `NodeKind`, `Flow` opaco e detecção de ciclos pelo algoritmo de Kahn); parser de linhas com `elm/parser` e erros com número da linha (`FlowParser.elm`); tela que mostra os problemas do fluxo e os achados do Prolog (`ReportView.elm`, `PrologReport.elm`). |
 | Eduardo de Almeida Ferreira | Testes plunit do motor de fluxos (`fsm.pl`) com o alvo no `make test-prolog`; configuração do `elm-test` e do `make test-elm`, com testes de `Domain` (ids, eventos, URLs, nó duplicado, ligação para nó inexistente e ciclos) e de `FlowParser` (erros de sintaxe com número da linha) em `frontend/tests/`; módulo `ApiError.elm`, que guarda o `detail` das respostas de erro do FastAPI para a tela mostrá-lo, e `ExecutionOutcome` no lugar do `status` em `String`; remoção da inicialização duplicada do Elm e do Mermaid no `index.html`; atualização da seção de arquitetura e de uso do README. |
 | Eduardo de Almeida Morais | Parte 2: armazenamento de fluxos como fatos em Prolog (`armazenamento.pl`) e testes plunit; rotas `/fluxos` e pytest; tela "Fluxos salvos" em Elm (`StorageView.elm`, `StorageApi.elm`); gatilho salvo junto com o fluxo; correções de configuração (versão do Elm, CORS, `make test-prolog`). |
 | Leonardo Michalski Miranda | Setup e documentação iniciais do projeto; criação da primeira versão do projeto que executava um fluxo sequencial com nós FETCH, PROMPT ou POST; uso de IA para documentação do projeto e para parsing de diagramas Mermaid; refatoração do motor de execução para utilização de Prolog em vez de somente Elm; revisões e ajustes para garantir a integração do sistema. |
@@ -425,6 +554,7 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 | Claude | Gerou o código da parte de armazenamento (Prolog do armazenamento, rotas `/fluxos`, tela "Fluxos salvos" em Elm) e os testes; explicou o código e ajudou a configurar o ambiente, porém tudo foi revisado pelo grupo | Testes automatizados (plunit e pytest), roteiro de teste manual na tela, revisão do código e explicação de cada parte |
 | Gemini / ChatGPT | Auxílio na Parte 6: resolução de erros de build do Vite, elaboração do dicionário de tradução e código para integração do Elm Ports com LocalStorage. Atividades realizadas com auxilo da inteligência artificial e revisadas pelo grupo. | Revisão da compilação e teste manual contínuo no navegador para garantir que a UI e a chave de API mantinham o comportamento desejado. |
 | Claude (Claude Code) | Parte do Yan: gerou o código e os testes da execução em paralelo por níveis, da escolha do provedor de LLM e da correção do `/analyze` no frontend, e ajudou a diagnosticar os problemas de ambiente (Elm via pnpm, CORS); os commits estão marcados com `Co-Authored-By: Claude` | Testes pytest, `elm make` compilando, execução manual dos fluxos com os três provedores e revisão de cada alteração |
+| Claude (chat) | Parte da Eduarda (Parte 4): gerou o código do domínio (`Domain.elm`), do parser (`FlowParser.elm`), da tela de erros e sugestões do Prolog (`ReportView.elm`, `PrologReport.elm`) e a ligação em `Types.elm`, `Main.elm` e `View.elm`, e explicou cada trecho | `elm make` compilando, testes `elm-test` de `Domain` e `FlowParser`, roteiro manual na tela e leitura de cada função |
 
 ## 12. Apresentação oral
 
