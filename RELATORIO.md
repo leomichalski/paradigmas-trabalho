@@ -1,36 +1,6 @@
-<!--
-  TEMPLATE DO RELATÓRIO DE ENTREGA: Paradigmas de Programação
-
-  Como usar:
-  - Copie este arquivo para a raiz do repositório do grupo, com o nome
-    RELATORIO.md, e preencha todas as seções.
-  - Os textos entre <!- - e - -> (como este) são instruções. Eles não
-    aparecem quando o arquivo é visualizado, mas APAGUE-OS antes de entregar.
-  - Troque tudo o que estiver entre [colchetes].
-  - Seja direto. Frases curtas e listas valem mais que parágrafos longos.
-    Um relatório típico cabe em 4 a 8 páginas.
-  - O relatório e o código são avaliados juntos. Sempre que possível,
-    aponte para o código (arquivo e linha) em vez de descrevê-lo. Os
-    critérios de avaliação estão em AVALIACAO.md.
-  - ANTES DE ENTREGAR, rode o validador na raiz do repositório:
-
-        uv run scripts/validar_entrega.py
-
-    Ele confere a FORMA do relatório (comentários apagados, colchetes
-    preenchidos, tabelas bem formadas, seções presentes, arquivos
-    existentes), não o conteúdo. Corrija todos os ERROS apontados.
--->
-
 # ProspectFlow
 
 ## 1. Identificação
-
-<!--
-  Os grupos têm de 3 a 7 pessoas (5, em média). A tabela abaixo tem 5
-  linhas: adicione ou remova linhas conforme o tamanho do seu grupo, aqui e
-  na seção 10. Os grupos podem misturar alunos das turmas das 14h e das 16h:
-  indique a turma de CADA integrante.
--->
 
 | Nome completo | Matrícula | Turma (14h/16h) | Usuário GitHub |
 |---------------|-----------|-----------------|----------------|
@@ -44,43 +14,18 @@
 
 - **Nome do projeto:** ProspectFlow
 - **Nome do grupo:** Lambda Squad
-  <!--
-    O nome do grupo identifica vocês nas planilhas de notas e na chamada
-    para a apresentação. Não dá para validar se é único, então caprichem:
-    "Grupo 3" vai colidir com o "Grupo 3" da outra turma.
-  -->
 - **Repositório:** https://github.com/leomichalski/paradigmas-trabalho
-- **Commit ou tag entregue:** [`a1b2c3d` ou `v1.0`]
-  <!--
-    O avaliador vai olhar exatamente esta versão. Para criar uma tag:
-      git tag v1.0 && git push origin v1.0
-  -->
+- **Commit ou tag entregue:** `v1.0`
 - **Ponto de partida:** inspirado em plataformas de automação de workflows, como o n8n.
-  <!--
-    Escolha UMA faixa. Ela define o ajuste de escopo da nota do grupo
-    (AVALIACAO.md, seção 1.5). O professor confirma a faixa na apresentação.
-  -->
 - **Slides da apresentação oral:** https://docs.google.com/presentation/d/1DPOFrzh4NuB9V1EEUNQG9a80Z1trTprwma9aimZj_W4/edit?usp=sharing
-  <!--
-    No final do semestre, cada grupo faz uma apresentação oral de 15
-    minutos. Slides são opcionais; se o grupo usar, coloque o arquivo no
-    repositório (de preferência em PDF) e indique o caminho aqui.
-  -->
 
 ## 2. Resumo
 
 ProspectFlow é um editor e executor de fluxos de automação com LLM, descritos em texto com uma sintaxe limitada do Mermaid. O frontend em Elm envia o fluxo para um backend FastAPI, e o Prolog executa o fluxo como uma máquina de estados (cada nó dispara um evento que escolhe o próximo passo), analisa o grafo e guarda os fluxos salvos como uma base de fatos consultável.
 
 ![Gif do Sistema](assets/demo.gif)
-<!-- Uma ou duas capturas de tela da interface. Crie a pasta docs/ se precisar. -->
 
 ## 3. Como executar
-
-<!--
-  Teste estas instruções numa máquina "limpa" (ou peça a um colega de
-  outro grupo). Se o avaliador não conseguir rodar o sistema, o resto do
-  trabalho não pode ser verificado.
--->
 
 **Requisitos** (com as versões que o grupo usou):
 
@@ -122,11 +67,6 @@ make test-elm      # só os testes do frontend
 
 ## 4. Arquitetura
 
-<!--
-  Um diagrama simples (pode ser em texto) mostrando as partes do sistema e
-  como elas se comunicam. Diga em uma frase a responsabilidade de cada parte.
--->
-
 ```
 [Elm] --HTTP/JSON--> [Python/FastAPI] --PySwip--> [Prolog]
 ```
@@ -134,7 +74,7 @@ make test-elm      # só os testes do frontend
 | Parte  | Responsabilidade | Arquivos principais |
 |--------|------------------|---------------------|
 | Prolog | Interpretação dos diagramas Mermaid, análise de grafos, detecção de ciclos e nós inalcançáveis, cálculo dos níveis de paralelismo, execução e armazenamento dos workflows. | `backend/prolog/fsm.pl`, `backend/prolog/graph.pl`, `backend/prolog/armazenamento.pl` |
-| Elm    | Frontend; pré-validação de workflows.            | [`frontend/src/...`]   |
+| Elm    | Interface no navegador: editor do fluxo com pré-visualização do diagrama, execução e log, escolha do provedor de IA, fluxos salvos e tradução PT/EN; tipos do domínio e parser que validam o fluxo. | `frontend/src/Main.elm`, `frontend/src/View.elm`, `frontend/src/Types.elm`, `frontend/src/StorageView.elm`, `frontend/src/Domain.elm`, `frontend/src/FlowParser.elm` |
 | Python | Integração entre Elm e Prolog, exposição das rotas HTTP, validação das entradas e conversão dos resultados para JSON. | `backend/app/main.py`, `backend/app/prolog.py`, `backend/app/rotas_fluxos.py`, `backend/app/armazenamento.py` |
 
 ## 5. Parte em Prolog
@@ -207,9 +147,9 @@ A resposta não é só "sim" ou "não": é o próprio caminho (`reverse/2` o põ
 ordem certa). O `/execute` usa esse resultado para recusar o fluxo antes de
 executar, com a mensagem `Workflow has a cycle: a -> b -> a`.
 
-# 6. Parte em Elm
+## 6. Parte em Elm
 
-## 6.1 Modelo e mensagens
+### 6.1 Modelo e mensagens
 
 ```elm
 type alias Model =
@@ -251,7 +191,7 @@ type Msg
 
 **Msg como Custom Type:** no Elm, todas as interações do usuário ou respostas assíncronas do backend precisam ser estritamente tipadas. Os construtores do `Msg` encapsulam os dados necessários para as transições de estado, como `GotExecutionResult`, que usa o tipo `Result` nativo para forçar o tratamento explícito de sucessos (`Ok`) e falhas (`Err`) de requisições HTTP, garantindo que a interface nunca quebre por exceções não tratadas.
 
-### Fluxos salvos (`frontend/src/Types.elm:27-67`)
+**Fluxos salvos (`frontend/src/Types.elm:27-67`).**
 
 ```elm
 type SavedFlows
@@ -276,7 +216,7 @@ type StorageStatus
 
 **`StorageDone`** guarda qual ação terminou (`FlowSaved`, `FlowOpened`, `FlowDeleted`) e o nome do fluxo, para a mensagem de confirmação certa.
 
-### Provedor de LLM (`frontend/src/Types.elm:83-117`)
+**Provedor de LLM (`frontend/src/Types.elm:83-117`).**
 
 ```elm
 type LlmProvider
@@ -293,7 +233,7 @@ providerFromId : String -> Maybe LlmProvider
 
 O `case` em `apiKeyPlaceholder` (`View.elm:146`) é exaustivo: ao adicionar `NvidiaUltra`, o compilador aponta todo lugar que ainda não trata o novo construtor.
 
-## 6.2 Conceitos do paradigma funcional utilizados
+### 6.2 Conceitos do paradigma funcional utilizados
 
 - [x] **Arquitetura Elm (Model, update, view):** estrutura base da SPA no arquivo principal, em que o `update` recebe a mensagem (`Msg`) e o estado atual (`Model`), retornando um novo modelo derivado do original.
 
@@ -311,7 +251,7 @@ O `case` em `apiKeyPlaceholder` (`View.elm:146`) é exaustivo: ao adicionar `Nvi
 
 - [x] **Imutabilidade e atualização de records:** ao atualizar os dados no `Model` dentro da função `update` (ex.: `( { model | apiKey = txt }, saveApiKey txt )`), o record original não é modificado in-place (como seria feito em JS ou Python); o Elm retorna uma nova cópia do objeto atualizando apenas os valores apontados.
 
-## 6.3 Trecho em destaque
+### 6.3 Trecho em destaque
 
 ```elm
 -- frontend/src/Translations.elm
@@ -333,12 +273,6 @@ Essa escolha se destaca porque se baseia no Pattern Matching do compilador do El
 
 ## 7. Integração
 
-<!--
-  Curto: a parte Python não é avaliada. Liste as rotas ou a forma de
-  comunicação e o formato dos dados trocados. Se o grupo não usou Python,
-  explique como Elm e Prolog se comunicam.
--->
-
 | Rota / chamada | Entrada | Saída | Predicado Prolog |
 |----------------|---------|-------|------------------|
 | `POST /analyze` | `{"diagram_text"}` | `{"valid", "has_cycle", "cycle", "unreachable_nodes", "parallel_levels", "execution_order"}` | `parse_mermaid_text/3` e `analisar_grafo/7` |
@@ -350,15 +284,10 @@ Essa escolha se destaca porque se baseia no Pattern Matching do compilador do El
 
 ## 8. Testes e validação
 
-<!--
-  Como o grupo sabe que o sistema funciona? Testes automatizados (plunit,
-  pytest, elm-test), roteiros de teste manual, casos de borda verificados.
--->
-
 - **Análise de grafos (Parte 1):** 8 testes automatizados em `backend/tests/test_graph.py`, utilizando pytest, `TestClient` do FastAPI e integração real com Prolog. Os testes verificam a análise de fluxos sequenciais e paralelos, ordenação topológica, detecção de ciclos e autolaços, identificação de nós inalcançáveis, análise de diagramas vazios, ausência do campo obrigatório `diagram_text` e rejeição de grafos cíclicos pelo endpoint `/execute`.
 - **Validação manual da execução paralela (Parte 1):** testes realizados diretamente no Prolog, pelo Swagger e pela interface Elm, utilizando um servidor HTTP local com suporte a requisições concorrentes. Foi validado um workflow completo com NVIDIA NIM (FETCH → PROMPT → dois POSTs paralelos → DONE). Ambos os POSTs receberam a mesma resposta gerada pela IA, retornaram HTTP 200 e iniciaram com aproximadamente 1,8 ms de diferença. Com uma espera controlada de três segundos em cada requisição, a execução conjunta dos POSTs levou aproximadamente três segundos, em comparação com os seis segundos estimados para uma execução sequencial.
 - **Frontend (elm-test):** 75 testes em `frontend/tests/` (`make test-elm`), todos sobre funções puras, sem navegador nem backend. `DomainTest` e `FlowParserTest` cobrem os casos de borda do domínio: texto vazio, nó duplicado, ligação para nó não declarado, ciclo (inclusive auto-laço), losango e ligações duplas que não são ciclo, fim de linha do Windows (`\r\n`) e `PROMPT` com dois-pontos no texto. `ApiErrorTest` cobre os formatos de erro do FastAPI (`detail` em texto, em lista no 422, corpo que não é JSON, corpo vazio).
-- **Prolog (fsm.pl):** [N] testes plunit em `backend/prolog/test_fsm.pl` (`make test-prolog`) para [o que eles cobrem].
+- **Prolog (fsm.pl):** 20 testes plunit em `backend/prolog/test_fsm.pl` (`make test-prolog`), sem depender da internet: 12 do parser (nós, transições, o fluxo do README, cabeçalho e linhas em branco, fim de linha do Windows, texto vazio) e 8 da execução (fluxos que terminam em DONE e em ABORT, ação desconhecida, falha de FETCH e de POST seguindo a transição de falha, log da ação executada, fluxo sem seta para o evento e diagrama sem nós).
 - **Execução e provedores de LLM:** testes pytest (`make test-backend`):
   `test_execute_rejects_cycle` (`backend/tests/test_graph.py:129`) roda o
   Prolog de verdade e confere que um fluxo com ciclo é recusado com 400 e o
@@ -383,8 +312,6 @@ Essa escolha se destaca porque se baseia no Pattern Matching do compilador do El
   parênteses, como `x"), halt, ("`, que é guardado como texto e não vira
   código Prolog.
 
-
-
 - **Interface Visual e Integração (Parte 6):** Roteiro de testes manuais focados na persistência e reatividade da SPA (Single Page Application).
 - **Casos de borda visuais:** 
 Persistência Segura: Atualizações de página (F5) não perdem a Chave de API, validando o isolamento via Elm Ports e localStorage. Estado Imutável: A alternância do idioma (PT/EN) não interfere no fluxo desenhado nem apaga o grafo visualizado.
@@ -399,7 +326,7 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
     da linha;
   - escrever uma linha sem sentido mostra o erro de linha inválida, e vários
     erros aparecem juntos, não só o primeiro;
-  - adicionar uma ligação de volta ao primeiro nó (`done -->|x| start`) mostra
+  - adicionar uma ligação do `done` de volta ao primeiro nó (`start`) mostra
     os nós do ciclo;
   - apagar todo o texto faz o painel de análise sumir;
   - clicar em "Consultar Prolog" com o backend desligado mostra a mensagem de
@@ -408,11 +335,6 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
     ele descreve o texto anterior.
 
 ## 9. Limitações e problemas conhecidos
-
-<!--
-  Seja honesto. Um problema conhecido e bem descrito vale mais que um
-  problema escondido que o avaliador descobre sozinho.
--->
 
 - **Análise estrutural do grafo:** os níveis de paralelismo são calculados considerando todas as conexões do grafo. Entretanto, a execução de cada nó depende dos eventos produzidos durante o workflow.
 - **Melhorias futuras:** implementar estratégias para combinar os resultados de ramificações paralelas e aprimorar a identificação do estado final da execução.
@@ -424,15 +346,9 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 - O modelo NVIDIA NIM Ultra (550B) é bem mais lento que os outros; o nó PROMPT
   não tem tempo limite configurável.
 
-
 - **Tratamento do resultado da execução:** o status de sucesso da requisição HTTP não distingue necessariamente um workflow finalizado em DONE de um finalizado em ABORT.
 
 ## 10. Contribuição de cada integrante
-
-<!--
-  O que cada pessoa fez. Deve ser coerente com o histórico de commits do
-  repositório. Todos os integrantes precisam concordar com esta tabela.
--->
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
@@ -444,34 +360,20 @@ Persistência Segura: Atualizações de página (F5) não perdem a Chave de API,
 | Maria Samara Alves Silva | Interface de usuário e integração frontend em Elm. Implementou a internacionalização (i18n) segura através de Custom Types (`Translations.elm`); desenvolveu a persistência da Chave de API utilizando `Elm Ports` e `localStorage` via JavaScript (`main.js` e `Main.elm`); criou o feedback visual reativo para erros do Parser (`View.elm`). |
 | Yan Lucas Souza Guimarães | Execução do fluxo em paralelo por níveis do grafo em Prolog (`run_levels/6`, `run_state/7` em `fsm.pl`, com `concurrent_maplist/3`) e recusa de fluxos com ciclo no `/execute`, com teste pytest; escolha do provedor de LLM para os nós PROMPT (OpenAI, NVIDIA NIM e NVIDIA NIM Ultra 550B): fatos `llm_provider/4` no Prolog, campo `provider` no `/execute` com testes, e o custom type `LlmProvider` com o seletor na tela em Elm (`Types.elm`, `View.elm`, `Api.elm`); correção do frontend para chamar `/analyze` e decodificar sua resposta (`PrologApi.elm`, `PrologReport.elm`); correções para o app rodar de ponta a ponta (inicialização duplicada do Elm, eventos do PROMPT, imports dos testes, Makefile com pnpm e CORS); tradução do README para português e instruções de execução |
 
-<!--
-  Além desta tabela, que é do grupo, cada integrante entrega uma avaliação
-  360 graus individual no SEU repositório do GitHub Classroom, em
-  avaliacao-360/<matricula>.md. Veja o modelo em avaliacao-360/TEMPLATE.md.
--->
-
 ## 11. Fontes, código de terceiros e uso de IA
 
-<!--
-  Declare tudo o que não foi escrito pelo grupo. Declarar não tira pontos;
-  deixar de declarar pode anular o trabalho.
--->
+**Referências.**
 
-**Código reaproveitado.** [Ex.: "Partimos do template do Sudoku. Mantivemos
-a integração Python e a estrutura do frontend; o arquivo `x.pl` e os
-módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
-
-**Referências.** [Livros, documentação, tutoriais, repositórios consultados.]
+- Documentação do SWI-Prolog, incluindo `library(persistency)` e `library(plunit)`: https://www.swi-prolog.org/pldoc/
+- Guia oficial do Elm: https://guide.elm-lang.org/
+- Pacote `elm/parser`: https://package.elm-lang.org/packages/elm/parser/latest/
+- Documentação do FastAPI: https://fastapi.tiangolo.com/
+- Documentação do pyswip: https://github.com/yuce/pyswip
+- Sintaxe de fluxogramas do Mermaid: https://mermaid.js.org/syntax/flowchart.html
 
 **Uso de ferramentas de IA.**
 
-- **Faixa de uso no código:** [nenhum | pontual | auxiliar | intensivo]
-  <!--
-    nenhum: não usou. pontual: autocompletar, dúvidas, explicar erros.
-    auxiliar: trechos gerados pela IA e revisados pelo grupo. intensivo: a
-    IA escreveu a maior parte do código. Veja o efeito em AVALIACAO.md,
-    seção 1.5. Não declarar anula o trabalho; declarar não tira pontos.
-  -->
+- **Faixa de uso no código:** intensivo
 
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
@@ -483,36 +385,22 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 
 ## 12. Apresentação oral
 
-<!--
-  A apresentação tem 15 minutos e acontece no final do semestre. Uma
-  divisão que costuma funcionar: 2 min de contexto, 5 min de demonstração
-  do sistema funcionando, 6 min mostrando o código Prolog e Elm mais
-  interessante, 2 min de limitações e aprendizados. Todos os integrantes
-  devem falar.
-
-  Preencha esta seção antes da apresentação.
--->
-
 - **Slides:** https://docs.google.com/presentation/d/1DPOFrzh4NuB9V1EEUNQG9a80Z1trTprwma9aimZj_W4/edit?usp=sharing
 - **Roteiro:**
 
 | Parte | Duração | Quem apresenta |
 |-------|:-------:|----------------|
-| [Contexto e objetivo] | [2 min] | @yanzin00 |
-| [Demonstração] | [5 min] | @leomichalski e @eduardar0 |
-| [Código Prolog] | [3 min] | @LeticiaSantoss e @Edumorais08 |
-| [Código Elm] | [3 min] | @SamaraAlvess |
-| [Limitações e aprendizados] | [2 min] | @eduardoferre |
+| Capa, contexto e arquitetura (Elm → Python → Prolog) | 1,5 min | Leonardo Michalski Miranda |
+| Demonstração ao vivo | 3 min | Leonardo Michalski Miranda |
+| Prolog: execução paralela (`run_levels/6`, `llm_provider/4`) | 1,5 min | Yan Lucas Souza Guimarães |
+| Prolog: detecção de ciclo (`dfs_ciclo/4`) | 1,5 min | Letícia de Carvalho dos Santos |
+| Prolog: armazenamento (`fluxos_com_ligacao/3`) | 1,5 min | Eduardo de Almeida Morais |
+| Elm: tradução com `case` exaustivo | 1,5 min | Maria Samara Alves Silva |
+| Elm: tipos do domínio (`NodeKind`, `NodeId`) | 1,5 min | Eduarda Domingos Rodrigues |
+| Elm: `ApiError` e testes | 1,5 min | Eduardo de Almeida Ferreira |
+| Limitações e aprendizados | 1,5 min | Eduardo de Almeida Ferreira |
 
 ## 13. Reflexão sobre os paradigmas
-
-<!--
-  De 1 a 3 parágrafos. Perguntas que podem ajudar:
-  - O que ficou mais simples em Prolog do que seria numa linguagem
-    imperativa? E o que ficou mais difícil?
-  - O que o compilador do Elm impediu que desse errado?
-  - Como a forma de pensar mudou entre as duas linguagens?
--->
 
 O paradigma lógico facilitou a representação das relações entre os nós e as transições dos workflows. A utilização de predicados, recursão, unificação e backtracking permitiu implementar a detecção de ciclos, a identificação de nós inalcançáveis e o cálculo dos níveis de paralelismo de forma declarativa.
 
@@ -520,19 +408,3 @@ Uma das principais dificuldades foi a mudança da forma de pensar da programaç�
 
 ---
 
-<!--
-  CHECKLIST ANTES DE ENTREGAR (apague esta seção depois de conferir)
-
-  - [ ] `uv run scripts/validar_entrega.py` termina sem erros.
-  - [ ] Todos os integrantes, com matrícula e turma, estão na seção 1.
-  - [ ] O commit ou tag da seção 1 existe no repositório e é a versão final.
-  - [ ] As instruções da seção 3 funcionam numa máquina sem nada instalado
-        além dos requisitos listados.
-  - [ ] Os locais indicados (arquivo:linha) conferem com o commit entregue.
-  - [ ] As seções 10 e 11 foram revisadas por todo o grupo.
-  - [ ] Se há slides, o arquivo está no repositório e o caminho da seção 1
-        está certo.
-  - [ ] Cada integrante entregou a própria avaliação 360 graus no seu
-        repositório individual, em avaliacao-360/<matricula>.md.
-  - [ ] Nenhum texto entre [colchetes] ou comentário de instrução sobrou.
--->
